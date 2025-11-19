@@ -20,8 +20,8 @@ import {
   LogOut,
   Chrome,
   AppWindow,
+  Menu, // Importamos el icono de menú
 } from "lucide-react";
-import "./App.css";
 
 // Importaciones de nuestros archivos nuevos
 import { INITIAL_ASSETS, ANALYSTS } from "./data/mockData";
@@ -29,24 +29,10 @@ import { LoginScreen } from "./components/LoginScreen";
 import { StatusBadge } from "./components/StatusBadge";
 import { RiskMeter } from "./components/RiskMeter";
 import { Notification } from "./components/Notification";
-
-// Componente auxiliar pequeño para Sidebar (podría ir a components/ui/SidebarItem.jsx)
-const SidebarItem = ({ icon: Icon, label, active, onClick }) => (
-  <button
-    onClick={onClick}
-    className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors ${
-      active
-        ? "bg-blue-50 text-blue-600 border-r-4 border-blue-600"
-        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-    }`}
-  >
-    <Icon size={20} />
-    {label}
-  </button>
-);
+import { SidebarItem } from "./components/SidebarItem";
 
 export default function App() {
-  const [currentUser, setCurrentUser] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null); // State para la sesión
   const [assets, setAssets] = useState(INITIAL_ASSETS);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [selectedAsset, setSelectedAsset] = useState(null);
@@ -55,18 +41,24 @@ export default function App() {
     message: null,
     type: "success",
   });
+
+  // Nuevo estado para el menú móvil
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   const fileInputRef = useRef(null);
 
   // Filtros
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
-    analyst: "Todos",
+    analyst: "Todos", // Para admins
     vulnName: "",
     minRisk: 0,
   });
 
+  // Safe check for role
   const isAnalyst = currentUser?.role === "Analyst";
 
+  // Lógica de filtrado Principal
   const filteredAssets = useMemo(() => {
     if (!currentUser) return [];
 
@@ -82,7 +74,6 @@ export default function App() {
       const matchesAnalystFilter = isAnalyst
         ? true
         : filters.analyst === "Todos" || asset.analyst === filters.analyst;
-
       const matchesVulnName =
         filters.vulnName === "" ||
         asset.vulnerabilities.some(
@@ -90,7 +81,6 @@ export default function App() {
             v.name.toLowerCase().includes(filters.vulnName.toLowerCase()) &&
             v.status === "Open"
         );
-
       const matchesRisk = asset.riskScore >= filters.minRisk;
 
       return (
@@ -103,6 +93,7 @@ export default function App() {
     });
   }, [assets, searchTerm, filters, currentUser, isAnalyst]);
 
+  // Stats calculados dinámicamente
   const stats = useMemo(() => {
     if (!currentUser)
       return { totalAssets: 0, criticalAssets: 0, appVulns: 0, avgRisk: 0 };
@@ -150,30 +141,53 @@ export default function App() {
     }, 1000);
   };
 
+  // --- RENDERIZADO ---
+
   if (!currentUser) {
     return <LoginScreen onLogin={setCurrentUser} />;
   }
 
   return (
-    <div className="flex h-screen bg-gray-50 font-sans text-slate-800">
+    <div className="flex h-screen bg-gray-50 font-sans text-slate-800 overflow-hidden">
       <Notification
         message={notification.message}
         type={notification.type}
         onClose={() => setNotification({ ...notification, message: null })}
       />
 
-      {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-gray-200 hidden md:flex flex-col">
-        <div className="p-6 border-b border-gray-100">
+      {/* Mobile Overlay (Fondo oscuro cuando abres menú) */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 md:hidden backdrop-blur-sm transition-opacity"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar Responsive */}
+      <aside
+        className={`
+        fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 flex flex-col transition-transform duration-300 ease-in-out shadow-2xl md:shadow-none md:translate-x-0 md:static
+        ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
+      `}
+      >
+        <div className="p-6 border-b border-gray-100 flex justify-between items-center">
           <div className="flex items-center gap-2 text-blue-600 font-bold text-xl">
             <ShieldAlert className="fill-blue-100" />
             <span>SecAssets</span>
           </div>
-          <p
-            className="text-xs text-gray-400 mt-1 truncate"
-            title={currentUser.name}
+          {/* Close Button for Mobile */}
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="md:hidden text-gray-500 hover:text-gray-800"
           >
-            Hola, {currentUser.name.split(" ")[0]}
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Info User (Visible on sidebar now) */}
+        <div className="px-6 pt-4 pb-0">
+          <p className="text-xs text-gray-400 truncate font-medium uppercase tracking-wider">
+            Sesión de {currentUser.name.split(" ")[0]}
           </p>
         </div>
 
@@ -185,6 +199,7 @@ export default function App() {
             onClick={() => {
               setActiveTab("dashboard");
               setSelectedAsset(null);
+              setSidebarOpen(false);
             }}
           />
           <SidebarItem
@@ -194,6 +209,7 @@ export default function App() {
             onClick={() => {
               setActiveTab("inventory");
               setSelectedAsset(null);
+              setSidebarOpen(false);
             }}
           />
           {!isAnalyst && (
@@ -223,27 +239,36 @@ export default function App() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 shadow-sm z-10">
-          <h1 className="text-lg font-semibold text-gray-800">
-            {selectedAsset
-              ? `Detalle: ${selectedAsset.name}`
-              : activeTab === "dashboard"
-              ? `Dashboard de ${
-                  currentUser.role === "Admin" ? "Admin" : "Analista"
-                }`
-              : "Inventario Asignado"}
-          </h1>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-full border border-gray-200">
+      <main className="flex-1 flex flex-col overflow-hidden w-full relative">
+        {/* Header Responsive */}
+        <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 md:px-6 shadow-sm z-10 shrink-0">
+          <div className="flex items-center gap-3">
+            {/* Hamburger Menu Button (Mobile Only) */}
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-lg md:hidden"
+            >
+              <Menu size={24} />
+            </button>
+
+            <h1 className="text-lg font-semibold text-gray-800 truncate max-w-[200px] md:max-w-none">
+              {selectedAsset
+                ? `Detalle: ${selectedAsset.name}`
+                : activeTab === "dashboard"
+                ? "Dashboard"
+                : "Inventario"}
+            </h1>
+          </div>
+
+          <div className="flex items-center gap-2 md:gap-4">
+            <div className="hidden md:flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-full border border-gray-200">
               <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
               <span className="text-xs font-medium text-gray-600">
-                Conectado como {currentUser.name}
+                {currentUser.name}
               </span>
             </div>
             <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs text-white ${
+              className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs text-white shrink-0 ${
                 isAnalyst ? "bg-blue-500" : "bg-purple-600"
               }`}
             >
@@ -252,16 +277,16 @@ export default function App() {
           </div>
         </header>
 
-        {/* Content */}
-        <div className="flex-1 overflow-auto p-6">
+        {/* Content Scrollable */}
+        <div className="flex-1 overflow-auto p-4 md:p-6">
           {/* VIEW: DASHBOARD */}
           {activeTab === "dashboard" && !selectedAsset && (
             <div className="space-y-6">
               {/* Stats Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                 <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col">
                   <span className="text-gray-500 text-sm font-medium">
-                    Workstations Asignadas
+                    Total Asignado
                   </span>
                   <div className="flex items-end justify-between mt-2">
                     <span className="text-3xl font-bold text-gray-900">
@@ -276,7 +301,7 @@ export default function App() {
                     className="text-gray-500 text-sm font-medium"
                     title="Vulns en Chrome, Edge, Office, Teams"
                   >
-                    Vulns. Apps Críticas
+                    Apps Críticas
                   </span>
                   <div className="flex items-end justify-between mt-2">
                     <span className="text-3xl font-bold text-gray-900">
@@ -326,20 +351,19 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Quick Actions / Import */}
-              <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 flex items-center justify-between">
+              {/* Quick Actions */}
+              <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div>
                   <h3 className="text-blue-800 font-semibold text-lg">
-                    Actualizar mi inventario
+                    Actualizar Inventario
                   </h3>
                   <p className="text-blue-600 text-sm mt-1">
-                    Sube el reporte CSV para actualizar el estado de tus{" "}
-                    {stats.totalAssets} equipos asignados.
+                    Carga un reporte CSV para actualizar el estado de seguridad.
                   </p>
                 </div>
                 <button
                   onClick={() => fileInputRef.current.click()}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg shadow-sm font-medium flex items-center gap-2"
+                  className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg shadow-sm font-medium flex items-center justify-center gap-2"
                 >
                   <Upload size={18} />
                   Cargar Reporte
@@ -357,9 +381,9 @@ export default function App() {
 
           {/* VIEW: INVENTORY LIST */}
           {activeTab === "inventory" && !selectedAsset && (
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-visible">
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
               {/* --- FILTER TOOLBAR --- */}
-              <div className="p-4 border-b border-gray-200 flex flex-col sm:flex-row gap-4 justify-between bg-gray-50 relative z-20">
+              <div className="p-4 border-b border-gray-200 flex flex-col sm:flex-row gap-4 justify-between bg-gray-50">
                 <div className="relative w-full sm:w-96">
                   <Search
                     className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
@@ -367,7 +391,7 @@ export default function App() {
                   />
                   <input
                     type="text"
-                    placeholder="Buscar por usuario, IP, SO..."
+                    placeholder="Buscar usuario, IP..."
                     className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -377,7 +401,7 @@ export default function App() {
                 <div className="flex gap-2 relative">
                   <button
                     onClick={() => setShowFilters(!showFilters)}
-                    className={`px-3 py-2 border rounded-lg text-sm flex items-center gap-2 transition-colors ${
+                    className={`flex-1 sm:flex-none justify-center px-3 py-2 border rounded-lg text-sm flex items-center gap-2 transition-colors ${
                       showFilters ||
                       filters.analyst !== "Todos" ||
                       filters.vulnName !== "" ||
@@ -400,7 +424,7 @@ export default function App() {
 
                   {/* --- FILTER POPOVER --- */}
                   {showFilters && (
-                    <div className="absolute right-0 top-12 w-80 bg-white rounded-xl shadow-xl border border-gray-200 p-5 z-50 animate-in fade-in slide-in-from-top-2">
+                    <div className="absolute right-0 top-12 w-full sm:w-80 bg-white rounded-xl shadow-xl border border-gray-200 p-5 z-50 animate-in fade-in slide-in-from-top-2">
                       <div className="flex justify-between items-center mb-4">
                         <h3 className="font-semibold text-gray-800">Filtros</h3>
                         <button
@@ -412,7 +436,6 @@ export default function App() {
                       </div>
 
                       <div className="space-y-4">
-                        {/* Filtro: Analista (Solo si es Admin) */}
                         {!isAnalyst && (
                           <div>
                             <label className="block text-xs font-medium text-gray-500 mb-1">
@@ -438,15 +461,14 @@ export default function App() {
                           </div>
                         )}
 
-                        {/* Filtro: App */}
                         <div>
                           <label className="block text-xs font-medium text-gray-500 mb-1">
-                            Software (Ej. Chrome, Teams)
+                            Software
                           </label>
                           <input
                             type="text"
                             className="w-full p-2 border border-gray-300 rounded-md text-sm bg-white focus:ring-2 focus:ring-blue-500 outline-none"
-                            placeholder="Ej: Edge"
+                            placeholder="Ej: Chrome"
                             value={filters.vulnName}
                             onChange={(e) =>
                               setFilters({
@@ -457,7 +479,6 @@ export default function App() {
                           />
                         </div>
 
-                        {/* Filtro: Riesgo */}
                         <div>
                           <label className="block text-xs font-medium text-gray-500 mb-1 flex justify-between">
                             <span>Riesgo Mínimo</span>
@@ -501,15 +522,15 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Table */}
-              <div className="overflow-x-auto min-h-[400px]">
-                <table className="w-full text-left text-sm">
+              {/* Table with Horizontal Scroll for Mobile */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm whitespace-nowrap">
                   <thead className="bg-gray-50 text-gray-500 font-medium border-b border-gray-200">
                     <tr>
                       <th className="px-6 py-3">Workstation</th>
                       {!isAnalyst && <th className="px-6 py-3">Analista</th>}
                       <th className="px-6 py-3">Usuario</th>
-                      <th className="px-6 py-3">IP Address</th>
+                      <th className="px-6 py-3">IP</th>
                       <th className="px-6 py-3">Riesgo</th>
                       <th className="px-6 py-3">Estado</th>
                       <th className="px-6 py-3"></th>
@@ -573,10 +594,7 @@ export default function App() {
                         >
                           <div className="flex flex-col items-center justify-center">
                             <Search size={48} className="text-gray-200 mb-4" />
-                            <p>
-                              No tienes equipos asignados que coincidan con la
-                              búsqueda.
-                            </p>
+                            <p>No se encontraron resultados.</p>
                             <button
                               onClick={resetFilters}
                               className="text-blue-600 text-sm mt-2 hover:underline"
@@ -595,7 +613,7 @@ export default function App() {
 
           {/* VIEW: ASSET DETAIL */}
           {selectedAsset && (
-            <div className="animate-fade-in">
+            <div className="animate-fade-in pb-8">
               <button
                 onClick={() => setSelectedAsset(null)}
                 className="mb-4 text-sm text-gray-500 hover:text-gray-900 flex items-center gap-1"
@@ -619,16 +637,14 @@ export default function App() {
                       </div>
                     </div>
 
-                    <h2 className="text-2xl font-bold text-gray-900 mb-1">
+                    <h2 className="text-2xl font-bold text-gray-900 mb-1 truncate">
                       {selectedAsset.name}
                     </h2>
                     <p className="text-gray-500 mb-6">{selectedAsset.os}</p>
 
                     <div className="space-y-4">
                       <div className="flex justify-between py-2 border-b border-gray-100">
-                        <span className="text-gray-500 text-sm">
-                          Analista Responsable
-                        </span>
+                        <span className="text-gray-500 text-sm">Analista</span>
                         <span className="text-sm text-purple-700 font-medium">
                           {selectedAsset.analyst}
                         </span>
@@ -657,15 +673,13 @@ export default function App() {
                   </div>
 
                   <div className="bg-blue-600 text-white rounded-xl p-6 shadow-lg">
-                    <h3 className="font-bold text-lg mb-2">
-                      Acciones de Parcheo
-                    </h3>
+                    <h3 className="font-bold text-lg mb-2">Acciones</h3>
                     <div className="grid grid-cols-1 gap-3">
                       <button className="bg-blue-700 hover:bg-blue-800 py-2 rounded-lg text-sm font-medium transition-colors">
-                        Registrar Parche Aplicado
+                        Registrar Parche
                       </button>
                       <button className="bg-white text-blue-700 hover:bg-gray-100 py-2 rounded-lg text-sm font-medium transition-colors">
-                        Contactar a {selectedAsset.user}
+                        Contactar Usuario
                       </button>
                     </div>
                   </div>
@@ -676,7 +690,7 @@ export default function App() {
                   <div className="bg-white rounded-xl border border-gray-200 shadow-sm h-full">
                     <div className="p-6 border-b border-gray-200 flex justify-between items-center">
                       <h3 className="font-bold text-gray-900">
-                        Vulnerabilidades Pendientes
+                        Vulnerabilidades
                       </h3>
                       <button className="text-blue-600 text-sm hover:underline">
                         + Nota
@@ -687,11 +701,9 @@ export default function App() {
                       <div className="p-12 text-center">
                         <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4 opacity-20" />
                         <h4 className="text-lg font-medium text-gray-900">
-                          Sin Riesgos Detectados
+                          Sin Riesgos
                         </h4>
-                        <p className="text-gray-500">
-                          Buen trabajo. Este equipo está limpio.
-                        </p>
+                        <p className="text-gray-500">Equipo limpio.</p>
                       </div>
                     ) : (
                       <div className="divide-y divide-gray-100">
@@ -718,7 +730,7 @@ export default function App() {
                               }`}
                             >
                               <div className="flex-1">
-                                <div className="flex items-center gap-3 mb-1">
+                                <div className="flex flex-wrap items-center gap-2 mb-1">
                                   <StatusBadge status={vuln.severity} />
                                   <span className="font-mono text-sm text-gray-500 font-medium">
                                     {vuln.cve}
@@ -730,23 +742,23 @@ export default function App() {
                                   )}
                                   {isBrowser && (
                                     <span className="text-[10px] font-bold text-blue-600 bg-white px-2 rounded border border-blue-200">
-                                      BROWSER
+                                      WEB
                                     </span>
                                   )}
                                   {isAdobe && (
                                     <span className="text-[10px] font-bold text-red-600 bg-white px-2 rounded border border-red-200">
-                                      ADOBE
+                                      PDF
                                     </span>
                                   )}
                                 </div>
-                                <p className="text-gray-800 font-medium">
+                                <p className="text-gray-800 font-medium text-sm sm:text-base">
                                   {vuln.name}
                                 </p>
                                 <p className="text-sm text-gray-500 mt-1">
                                   Detectado: {vuln.date}
                                 </p>
                               </div>
-                              <div className="flex items-center gap-3">
+                              <div className="flex items-center gap-3 self-end sm:self-auto">
                                 <StatusBadge status={vuln.status} />
                                 <button className="text-gray-400 hover:text-gray-600">
                                   <MoreVertical size={18} />

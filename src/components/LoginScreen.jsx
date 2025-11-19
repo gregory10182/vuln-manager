@@ -4,7 +4,7 @@ import { ANALYSTS } from "../data/mockData";
 
 export const LoginScreen = ({ onLogin }) => (
   <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4">
-    <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-8 text-center">
+    <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-8 text-center animate-fade-in-up">
       <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
         <ShieldAlert size={32} />
       </div>
@@ -28,7 +28,7 @@ export const LoginScreen = ({ onLogin }) => (
           </span>
         </div>
 
-        <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto pr-1">
+        <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
           {ANALYSTS.map((name) => (
             <button
               key={name}
