@@ -398,7 +398,43 @@ export default function App() {
                   />
                 </div>
 
-                <div className="flex gap-2 relative">
+                {/* make the buttons full witdh in small screens */}
+                <div className="flex gap-2 relative flex-wrap">
+                  <button
+                    onClick={() => {
+                      const assetNames = filteredAssets
+                        .map((a) => a.name)
+                        .join("\n");
+                      navigator.clipboard.writeText(assetNames);
+                      setNotification({
+                        message:
+                          "Lista de workstations copiada al portapapeles.",
+                        type: "success",
+                      });
+                    }}
+                    className="flex-1 sm:flex-none justify-center px-3 py-2 border rounded-lg text-sm flex items-center gap-2 transition-colors bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
+                    title="Copiar lista de workstations"
+                  >
+                    Copiar Equipos
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      const assetIPs = filteredAssets
+                        .map((a) => a.ip)
+                        .join("\n");
+                      navigator.clipboard.writeText(assetIPs);
+                      setNotification({
+                        message: "Lista de IPs copiada al portapapeles.",
+                        type: "success",
+                      });
+                    }}
+                    className="flex-1 sm:flex-none justify-center px-3 py-2 border rounded-lg text-sm flex items-center gap-2 transition-colors bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
+                    title="Copiar lista de workstations"
+                  >
+                    Copiar IPs
+                  </button>
+
                   <button
                     onClick={() => setShowFilters(!showFilters)}
                     className={`flex-1 sm:flex-none justify-center px-3 py-2 border rounded-lg text-sm flex items-center gap-2 transition-colors ${
