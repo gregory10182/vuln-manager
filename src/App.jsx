@@ -55,6 +55,13 @@ export default function App() {
     minRisk: 0,
   });
 
+  // Función para mostrar notificaciones temporales
+  const setTimedNotification = ({ message, type }) => {
+    setNotification({ message, type });
+    setTimeout(() => {
+      setNotification({ message: null, type });
+    }, 3000);
+  };
   // Safe check for role
   const isAnalyst = currentUser?.role === "Analyst";
 
@@ -406,7 +413,7 @@ export default function App() {
                         .map((a) => a.name)
                         .join("\n");
                       navigator.clipboard.writeText(assetNames);
-                      setNotification({
+                      setTimedNotification({
                         message:
                           "Lista de workstations copiada al portapapeles.",
                         type: "success",
@@ -424,7 +431,7 @@ export default function App() {
                         .map((a) => a.ip)
                         .join("\n");
                       navigator.clipboard.writeText(assetIPs);
-                      setNotification({
+                      setTimedNotification({
                         message: "Lista de IPs copiada al portapapeles.",
                         type: "success",
                       });
