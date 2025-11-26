@@ -1,6 +1,5 @@
 import React from "react";
 import { ShieldAlert, Loader2 } from "lucide-react";
-import { ANALYSTS } from "../data/mockData";
 
 export const LoginScreen = ({ onLogin, analysts, loading }) => (
   <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4">

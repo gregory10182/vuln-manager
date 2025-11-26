@@ -1,27 +1,56 @@
-import React, { useState, useMemo, useRef } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import {
   LayoutDashboard,
   Monitor,
   ShieldAlert,
   Search,
-  Plus,
-  MoreVertical,
-  Laptop,
-  AlertTriangle,
-  CheckCircle,
-  XCircle,
   User,
   ChevronRight,
-  Activity,
   Filter,
   X,
   Upload,
-  Briefcase,
   LogOut,
-  Chrome,
   AppWindow,
-  Menu, // Importamos el icono de menú
+  AlertTriangle,
+  CheckCircle,
+  MoreVertical,
+  Laptop,
+  Menu,
+  Loader2, // Icono de carga
 } from "lucide-react";
+
+// ==========================================
+// 1. CONFIGURACIÓN Y UTILS
+// ==========================================
+
+// Ajusta esto a la URL de tu backend
+const API_URL = "http://localhost:3000/equipos";
+
+// Función auxiliar para calcular riesgo basado en vulnerabilidades reales
+const calculateRiskScore = (vulns) => {
+  if (!vulns || vulns.length === 0) return 0;
+
+  let score = vulns.reduce((acc, v) => {
+    // Solo sumamos riesgo si la vulnerabilidad está abierta
+    const estado = v.EquipoVulnerabilidad?.estado || "Active";
+    if (estado === "Fixed" || estado === "Closed") return acc;
+
+    switch (v.severity?.toLowerCase()) {
+      case "critical":
+        return acc + 35;
+      case "high":
+        return acc + 20;
+      case "medium":
+        return acc + 10;
+      case "low":
+        return acc + 2;
+      default:
+        return acc + 1;
+    }
+  }, 0);
+
+  return Math.min(score, 100); // Cap en 100
+};
 
 // Importaciones de nuestros archivos nuevos
 import { INITIAL_ASSETS, ANALYSTS } from "./data/mockData";
@@ -29,12 +58,18 @@ import { LoginScreen } from "./components/LoginScreen";
 import { StatusBadge } from "./components/StatusBadge";
 import { RiskMeter } from "./components/RiskMeter";
 import { Notification } from "./components/Notification";
-import { Sidebar } from "./pages/Sidebar";
+import { Sidebar } from "./pages/sidebar.jsx";
 
 export default function App() {
-  const [currentUser, setCurrentUser] = useState(null); // State para la sesión
+  const [currentUser, setCurrentUser] = useState(null);
+
+  // Estado de datos
+  const [assets, setAssets] = useState([]);
+  const [analystsList, setAnalystsList] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   const [activeTab, setActiveTab] = useState("dashboard");
-  const [assets, setAssets] = useState(INITIAL_ASSETS);
   const [selectedAsset, setSelectedAsset] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [notification, setNotification] = useState({
@@ -43,28 +78,97 @@ export default function App() {
   });
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
   const fileInputRef = useRef(null);
 
-  // Filtros
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
-    analyst: "Todos", // Para admins
+    analyst: "Todos",
     vulnName: "",
     minRisk: 0,
   });
 
-  // Función para mostrar notificaciones temporales
+  // --- FETCH DATA FROM BACKEND ---
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        // Llamada a tu API Real
+        const response = await fetch(API_URL);
+
+        if (!response.ok) {
+          throw new Error(`Error HTTP: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // Transformar datos del Backend (Sequelize) al formato del Frontend
+        const formattedAssets = data.map((equipo) => ({
+          id: equipo.id,
+          name: equipo.assetName, // Mapeo de assetName -> name
+          ip: equipo.IP,
+          os: equipo.SO,
+          user: equipo.UserID,
+          type: equipo.type,
+          // Acceso seguro a la relación 'analista' (puede venir null)
+          analyst: equipo.analista ? equipo.analista.name : "Sin Asignar",
+          status: "Operational", // <--- CAMBIO AQUÍ: Usamos 'Operational' para evitar conflicto con vulnerabilidad 'Active'
+
+          // Transformar vulnerabilidades y datos de la tabla intermedia
+          vulnerabilities: equipo.vulnerabilidades
+            ? equipo.vulnerabilidades.map((v) => ({
+                id: v.id,
+                cve: `Plugin ${v.pluginId}`, // Usamos pluginId como identificador visual
+                name: v.vulnName,
+                severity: v.severity,
+                // Datos de la tabla intermedia (EquipoVulnerabilidad)
+                status: v.EquipoVulnerabilidad?.estado || "Unknown",
+                date: v.EquipoVulnerabilidad?.fechaDetectada
+                  ? new Date(
+                      v.EquipoVulnerabilidad.fechaDetectada
+                    ).toLocaleDateString()
+                  : "N/A",
+              }))
+            : [],
+
+          // Calcular riesgo en el cliente
+          riskScore: calculateRiskScore(equipo.vulnerabilidades),
+        }));
+
+        setAssets(formattedAssets);
+
+        // Extraer lista única de analistas para el Login/Filtros
+        const uniqueAnalysts = [
+          ...new Set(
+            formattedAssets
+              .map((a) => a.analyst)
+              .filter((a) => a !== "Sin Asignar")
+          ),
+        ];
+        setAnalystsList(uniqueAnalysts);
+      } catch (err) {
+        console.error("Error fetching data:", err);
+        setError(
+          "No se pudo conectar con el servidor. Asegúrate que el backend esté corriendo."
+        );
+        // Fallback opcional: dejar assets vacío o cargar mock data de emergencia
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
   const setTimedNotification = ({ message, type }) => {
     setNotification({ message, type });
     setTimeout(() => {
       setNotification({ message: null, type });
     }, 3000);
   };
-  // Safe check for role
+
   const isAnalyst = currentUser?.role === "Analyst";
 
-  // Lógica de filtrado Principal
+  // --- Lógica de Filtrado ---
   const filteredAssets = useMemo(() => {
     if (!currentUser) return [];
 
@@ -72,6 +176,7 @@ export default function App() {
       const matchesSession = isAnalyst
         ? asset.analyst === currentUser.name
         : true;
+
       const matchesSearch =
         asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         asset.ip.includes(searchTerm) ||
@@ -80,13 +185,15 @@ export default function App() {
       const matchesAnalystFilter = isAnalyst
         ? true
         : filters.analyst === "Todos" || asset.analyst === filters.analyst;
+
       const matchesVulnName =
         filters.vulnName === "" ||
         asset.vulnerabilities.some(
           (v) =>
             v.name.toLowerCase().includes(filters.vulnName.toLowerCase()) &&
             v.status === "Open"
-        );
+        ); // Nota: Aquí filtramos por estado 'Open' en búsqueda rápida, ajustable según necesidad
+
       const matchesRisk = asset.riskScore >= filters.minRisk;
 
       return (
@@ -99,7 +206,7 @@ export default function App() {
     });
   }, [assets, searchTerm, filters, currentUser, isAnalyst]);
 
-  // Stats calculados dinámicamente
+  // --- Stats ---
   const stats = useMemo(() => {
     if (!currentUser)
       return { totalAssets: 0, criticalAssets: 0, appVulns: 0, avgRisk: 0 };
@@ -116,10 +223,14 @@ export default function App() {
             (v.name.toLowerCase().includes("chrome") ||
               v.name.toLowerCase().includes("edge") ||
               v.name.toLowerCase().includes("office")) &&
-            v.status === "Open"
+            (v.status === "Open" ||
+              v.status === "New" ||
+              v.status === "Active" ||
+              v.status === "Resurfaced")
         ).length,
       0
     );
+
     const avgRisk =
       totalAssets > 0
         ? Math.round(
@@ -136,21 +247,47 @@ export default function App() {
     setSearchTerm("");
   };
 
+  // Manejador de carga de archivo (Simulado por ahora en frontend, idealmente POST al backend)
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
     if (!file) return;
-    setTimeout(() => {
-      setNotification({
-        message: `CSV importado. Equipos actualizados para ${currentUser.name}.`,
-        type: "success",
-      });
-    }, 1000);
+
+    // Aquí iría la lógica para enviar el CSV a tu backend:
+    // const formData = new FormData(); formData.append('file', file);
+    // await fetch('/api/upload-csv', { method: 'POST', body: formData });
+
+    setTimedNotification({
+      message: `Archivo seleccionado. Implementar endpoint de carga para procesar ${file.name}.`,
+      type: "info",
+    });
   };
 
   // --- RENDERIZADO ---
 
   if (!currentUser) {
-    return <LoginScreen onLogin={setCurrentUser} />;
+    return (
+      <LoginScreen
+        onLogin={setCurrentUser}
+        analysts={analystsList}
+        loading={isLoading}
+      />
+    );
+  }
+
+  if (error && !assets.length) {
+    return (
+      <div className="h-screen flex flex-col items-center justify-center bg-red-50 text-red-700 p-4 text-center">
+        <AlertTriangle size={48} className="mb-4" />
+        <h2 className="text-xl font-bold mb-2">Error de Conexión</h2>
+        <p>{error}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+        >
+          Reintentar
+        </button>
+      </div>
+    );
   }
 
   return (
@@ -161,7 +298,7 @@ export default function App() {
         onClose={() => setNotification({ ...notification, message: null })}
       />
 
-      {/* Mobile Overlay (Fondo oscuro cuando abres menú) */}
+      {/* Mobile Overlay */}
       {sidebarOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-40 md:hidden backdrop-blur-sm transition-opacity"
@@ -170,23 +307,20 @@ export default function App() {
       )}
 
       <Sidebar
+        currentUser={currentUser}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
+        setSelectedAsset={setSelectedAsset}
+        setCurrentUser={setCurrentUser}
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
-        currentUser={currentUser}
-        selectedAsset={selectedAsset}
-        setSelectedAsset={setSelectedAsset}
         isAnalyst={isAnalyst}
-        setCurrentUser={setCurrentUser}
       />
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden w-full relative">
-        {/* Header Responsive */}
         <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 md:px-6 shadow-sm z-10 shrink-0">
           <div className="flex items-center gap-3">
-            {/* Hamburger Menu Button (Mobile Only) */}
             <button
               onClick={() => setSidebarOpen(true)}
               className="p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-lg md:hidden"
@@ -220,13 +354,22 @@ export default function App() {
           </div>
         </header>
 
-        {/* Content Scrollable */}
+        {/* Loading Overlay Global */}
+        {isLoading && (
+          <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-20 flex items-center justify-center flex-col">
+            <Loader2 className="animate-spin text-blue-600 mb-2" size={48} />
+            <p className="text-gray-500 font-medium">
+              Sincronizando con Base de Datos...
+            </p>
+          </div>
+        )}
+
         <div className="flex-1 overflow-auto p-4 md:p-6">
           {/* VIEW: DASHBOARD */}
           {activeTab === "dashboard" && !selectedAsset && (
             <div className="space-y-6">
-              {/* Stats Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                {/* Total Assets */}
                 <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col">
                   <span className="text-gray-500 text-sm font-medium">
                     Total Asignado
@@ -239,6 +382,7 @@ export default function App() {
                   </div>
                 </div>
 
+                {/* Critical Apps */}
                 <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col">
                   <span
                     className="text-gray-500 text-sm font-medium"
@@ -257,6 +401,7 @@ export default function App() {
                   </div>
                 </div>
 
+                {/* Critical Assets */}
                 <div className="bg-white p-6 rounded-xl border border-red-100 shadow-sm flex flex-col relative overflow-hidden">
                   <div className="absolute right-0 top-0 w-16 h-16 bg-red-500 opacity-5 rounded-bl-full"></div>
                   <span className="text-red-600 text-sm font-medium">
@@ -273,6 +418,7 @@ export default function App() {
                   </div>
                 </div>
 
+                {/* Avg Risk */}
                 <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col">
                   <span className="text-gray-500 text-sm font-medium">
                     Score Promedio
@@ -294,7 +440,7 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Quick Actions */}
+              {/* Quick Action: Upload */}
               <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div>
                   <h3 className="text-blue-800 font-semibold text-lg">
@@ -322,11 +468,11 @@ export default function App() {
             </div>
           )}
 
-          {/* VIEW: INVENTORY LIST */}
+          {/* VIEW: INVENTORY */}
           {activeTab === "inventory" && !selectedAsset && (
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
-              {/* --- FILTER TOOLBAR --- */}
               <div className="p-4 border-b border-gray-200 flex flex-col sm:flex-row gap-4 justify-between bg-gray-50">
+                {/* Search */}
                 <div className="relative w-full sm:w-96">
                   <Search
                     className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
@@ -341,7 +487,7 @@ export default function App() {
                   />
                 </div>
 
-                {/* make the buttons full witdh in small screens */}
+                {/* Toolbar Actions */}
                 <div className="flex gap-2 relative flex-wrap">
                   <button
                     onClick={() => {
@@ -350,13 +496,11 @@ export default function App() {
                         .join("\n");
                       navigator.clipboard.writeText(assetNames);
                       setTimedNotification({
-                        message:
-                          "Lista de workstations copiada al portapapeles.",
+                        message: "Lista de workstations copiada.",
                         type: "success",
                       });
                     }}
                     className="flex-1 sm:flex-none justify-center px-3 py-2 border rounded-lg text-sm flex items-center gap-2 transition-colors bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
-                    title="Copiar lista de workstations"
                   >
                     Copiar Equipos
                   </button>
@@ -368,12 +512,11 @@ export default function App() {
                         .join("\n");
                       navigator.clipboard.writeText(assetIPs);
                       setTimedNotification({
-                        message: "Lista de IPs copiada al portapapeles.",
+                        message: "Lista de IPs copiada.",
                         type: "success",
                       });
                     }}
                     className="flex-1 sm:flex-none justify-center px-3 py-2 border rounded-lg text-sm flex items-center gap-2 transition-colors bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
-                    title="Copiar lista de workstations"
                   >
                     Copiar IPs
                   </button>
@@ -391,17 +534,8 @@ export default function App() {
                   >
                     <Filter size={16} />
                     Filtros
-                    {(filters.analyst !== "Todos" ||
-                      filters.vulnName !== "" ||
-                      filters.minRisk > 0) && (
-                      <span className="flex h-2 w-2 relative">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
-                      </span>
-                    )}
                   </button>
 
-                  {/* --- FILTER POPOVER --- */}
                   {showFilters && (
                     <div className="absolute right-0 top-12 w-full sm:w-80 bg-white rounded-xl shadow-xl border border-gray-200 p-5 z-50 animate-in fade-in slide-in-from-top-2">
                       <div className="flex justify-between items-center mb-4">
@@ -431,7 +565,7 @@ export default function App() {
                               }
                             >
                               <option value="Todos">Todos</option>
-                              {ANALYSTS.map((opt) => (
+                              {analystsList.map((opt) => (
                                 <option key={opt} value={opt}>
                                   {opt}
                                 </option>
@@ -439,7 +573,6 @@ export default function App() {
                             </select>
                           </div>
                         )}
-
                         <div>
                           <label className="block text-xs font-medium text-gray-500 mb-1">
                             Software
@@ -457,7 +590,6 @@ export default function App() {
                             }
                           />
                         </div>
-
                         <div>
                           <label className="block text-xs font-medium text-gray-500 mb-1 flex justify-between">
                             <span>Riesgo Mínimo</span>
@@ -480,7 +612,6 @@ export default function App() {
                             }
                           />
                         </div>
-
                         <div className="pt-2 border-t border-gray-100 flex gap-2">
                           <button
                             onClick={resetFilters}
@@ -501,7 +632,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Table with Horizontal Scroll for Mobile */}
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm whitespace-nowrap">
                   <thead className="bg-gray-50 text-gray-500 font-medium border-b border-gray-200">
@@ -590,7 +720,7 @@ export default function App() {
             </div>
           )}
 
-          {/* VIEW: ASSET DETAIL */}
+          {/* VIEW: DETAIL */}
           {selectedAsset && (
             <div className="animate-fade-in pb-8">
               <button
@@ -601,7 +731,6 @@ export default function App() {
               </button>
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Info Card */}
                 <div className="lg:col-span-1 space-y-6">
                   <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
                     <div className="flex items-center justify-between mb-6">
@@ -615,12 +744,10 @@ export default function App() {
                         </div>
                       </div>
                     </div>
-
                     <h2 className="text-2xl font-bold text-gray-900 mb-1 truncate">
                       {selectedAsset.name}
                     </h2>
                     <p className="text-gray-500 mb-6">{selectedAsset.os}</p>
-
                     <div className="space-y-4">
                       <div className="flex justify-between py-2 border-b border-gray-100">
                         <span className="text-gray-500 text-sm">Analista</span>
@@ -650,7 +777,6 @@ export default function App() {
                       </div>
                     </div>
                   </div>
-
                   <div className="bg-blue-600 text-white rounded-xl p-6 shadow-lg">
                     <h3 className="font-bold text-lg mb-2">Acciones</h3>
                     <div className="grid grid-cols-1 gap-3">
@@ -664,7 +790,6 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Vulnerabilities List */}
                 <div className="lg:col-span-2">
                   <div className="bg-white rounded-xl border border-gray-200 shadow-sm h-full">
                     <div className="p-6 border-b border-gray-200 flex justify-between items-center">
@@ -675,7 +800,6 @@ export default function App() {
                         + Nota
                       </button>
                     </div>
-
                     {selectedAsset.vulnerabilities.length === 0 ? (
                       <div className="p-12 text-center">
                         <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4 opacity-20" />
@@ -696,7 +820,6 @@ export default function App() {
                           const isAdobe = vuln.name
                             .toLowerCase()
                             .includes("adobe");
-
                           return (
                             <div
                               key={vuln.id}
