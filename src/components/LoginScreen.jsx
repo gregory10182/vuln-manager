@@ -1,8 +1,8 @@
 import React from "react";
-import { ShieldAlert } from "lucide-react";
+import { ShieldAlert, Loader2 } from "lucide-react";
 import { ANALYSTS } from "../data/mockData";
 
-export const LoginScreen = ({ onLogin }) => (
+export const LoginScreen = ({ onLogin, analysts, loading }) => (
   <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4">
     <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-8 text-center animate-fade-in-up">
       <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -28,26 +28,35 @@ export const LoginScreen = ({ onLogin }) => (
           </span>
         </div>
 
-        <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
-          {ANALYSTS.map((name) => (
-            <button
-              key={name}
-              onClick={() => onLogin({ name: name, role: "Analyst" })}
-              className="w-full p-3 border border-gray-200 text-gray-700 rounded-lg hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700 transition-all text-left flex items-center gap-3 group"
-            >
-              <div className="w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center text-xs font-bold group-hover:bg-blue-100 group-hover:text-blue-600">
-                {name
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")}
-              </div>
-              <span className="text-sm font-medium">{name}</span>
-              <span className="ml-auto text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded-full">
-                20 hosts
-              </span>
-            </button>
-          ))}
-        </div>
+        {loading ? (
+          <div className="flex justify-center p-4 text-blue-600">
+            <Loader2 className="animate-spin" />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
+            {analysts.length > 0 ? (
+              analysts.map((name) => (
+                <button
+                  key={name}
+                  onClick={() => onLogin({ name: name, role: "Analyst" })}
+                  className="w-full p-3 border border-gray-200 text-gray-700 rounded-lg hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700 transition-all text-left flex items-center gap-3 group"
+                >
+                  <div className="w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center text-xs font-bold group-hover:bg-blue-100 group-hover:text-blue-600">
+                    {name
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")}
+                  </div>
+                  <span className="text-sm font-medium">{name}</span>
+                </button>
+              ))
+            ) : (
+              <p className="text-sm text-gray-400 italic">
+                No se encontraron analistas en la BD.
+              </p>
+            )}
+          </div>
+        )}
       </div>
     </div>
   </div>

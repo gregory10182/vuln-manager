@@ -29,7 +29,7 @@ import { LoginScreen } from "./components/LoginScreen";
 import { StatusBadge } from "./components/StatusBadge";
 import { RiskMeter } from "./components/RiskMeter";
 import { Notification } from "./components/Notification";
-import { Sidebar } from "./pages/Sidebar.jsx";
+import { Sidebar } from "./pages/Sidebar";
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState(null); // State para la sesión
