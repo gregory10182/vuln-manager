@@ -23,7 +23,7 @@ import {
   AppWindow,
   Menu, // Importamos el icono de menú
 } from "lucide-react";
-import { SidebarItem } from "../components/SidebarItem.jsx";
+import { SidebarItem } from "./SidebarItem.jsx";
 
 export const Sidebar = ({
   activeTab,

@@ -2,6 +2,16 @@ import axios from "axios";
 
 const apiUrl = "http://localhost:3000/";
 
+const getEquiposAnalista = async (analistaId) => {
+  try {
+    const response = await axios.get(apiUrl + "equipos/analista/" + analistaId);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching equipos:", error);
+    throw error;
+  }
+};
+
 const getEquipos = async () => {
   try {
     const response = await axios.get(apiUrl + "equipos");
@@ -24,5 +34,6 @@ const getAnalistas = async () => {
 
 export default {
   getEquipos,
+  getEquiposAnalista,
   getAnalistas,
 };

@@ -34,19 +34,21 @@ export const LoginScreen = ({ onLogin, analysts, loading }) => (
         ) : (
           <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
             {analysts.length > 0 ? (
-              analysts.map((name) => (
+              analysts.map((a) => (
                 <button
-                  key={name}
-                  onClick={() => onLogin({ name: name, role: "Analyst" })}
+                  key={a.id}
+                  onClick={() =>
+                    onLogin({ id: a.id, name: a.name, role: "Analyst" })
+                  }
                   className="w-full p-3 border border-gray-200 text-gray-700 rounded-lg hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700 transition-all text-left flex items-center gap-3 group"
                 >
                   <div className="w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center text-xs font-bold group-hover:bg-blue-100 group-hover:text-blue-600">
-                    {name
+                    {a.name
                       .split(" ")
                       .map((n) => n[0])
                       .join("")}
                   </div>
-                  <span className="text-sm font-medium">{name}</span>
+                  <span className="text-sm font-medium">{a.name}</span>
                 </button>
               ))
             ) : (
