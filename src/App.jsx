@@ -62,6 +62,7 @@ import { Sidebar } from "./components/Sidebar.jsx";
 import { Dashboard } from "./views/dashboard.jsx";
 import { Inventory } from "./views/inventory.jsx";
 import { Details } from "./views/details.jsx";
+import { Parchados } from "./views/parchados.jsx";
 
 import api from "./data/api.js";
 
@@ -190,10 +191,8 @@ export default function App() {
 
       const matchesVulnName =
         filters.vulnName === "" ||
-        asset.vulnerabilities.some(
-          (v) =>
-            v.name.toLowerCase().includes(filters.vulnName.toLowerCase()) &&
-            v.status === "Open"
+        asset.vulnerabilities.some((v) =>
+          v.name.toLowerCase().includes(filters.vulnName.toLowerCase())
         ); // Nota: Aquí filtramos por estado 'Open' en búsqueda rápida, ajustable según necesidad
 
       const matchesRisk = asset.riskScore >= filters.minRisk;
@@ -382,10 +381,16 @@ export default function App() {
               setFilters={setFilters}
               showFilters={showFilters}
               setShowFilters={setShowFilters}
+              setTimedNotification={setTimedNotification}
               resetFilters={resetFilters}
               setSelectedAsset={setSelectedAsset}
               isAnalyst={isAnalyst}
             />
+          )}
+
+          {/* VIEW: INVENTORY */}
+          {activeTab === "vulnerabilities" && !selectedAsset && (
+            <Parchados currentUser={currentUser} />
           )}
 
           {/* VIEW: DETAIL */}

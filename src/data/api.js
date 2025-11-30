@@ -32,8 +32,19 @@ const getAnalistas = async () => {
   }
 };
 
+const getVulnerabilidades = async (analistaId) => {
+  try {
+    const response = await axios.get(apiUrl + "vulnerabilidades/" + analistaId);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching vulnerabilidades:", error);
+    throw error;
+  }
+};
+
 export default {
   getEquipos,
   getEquiposAnalista,
   getAnalistas,
+  getVulnerabilidades,
 };

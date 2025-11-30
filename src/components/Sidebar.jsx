@@ -85,6 +85,16 @@ export const Sidebar = ({
             setSidebarOpen(false);
           }}
         />
+        <SidebarItem
+          icon={AlertTriangle}
+          label="Vulnerabilidades"
+          active={activeTab === "vulnerabilities" && !selectedAsset}
+          onClick={() => {
+            setActiveTab("vulnerabilities");
+            setSelectedAsset(null);
+            setSidebarOpen(false);
+          }}
+        />
         {!isAnalyst && (
           <>
             <div className="px-4 py-2 mt-4 mb-2 text-xs font-semibold text-gray-400 uppercase">
