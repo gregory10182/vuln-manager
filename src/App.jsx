@@ -100,24 +100,7 @@ export default function App() {
     }, 3000);
   };
 
-  useEffect(() => {
-    try {
-      api.getAnalistas().then((analysts) => {
-        setAnalystsList(analysts);
-      });
-    } catch (err) {
-      console.error("Error fetching analysts:", err);
-      setError(
-        "No se pudo conectar con el servidor. Asegúrate que el backend esté corriendo."
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    (async () => {
-      if (!currentUser) return;
+  const updateAssets = async () => {
       try {
         let data;
         if (currentUser.role === "Admin") {
@@ -172,8 +155,27 @@ export default function App() {
       } finally {
         setIsLoading(false);
       }
-    })();
-  }, [currentUser]);
+  };
+
+  useEffect(() => {
+    try {
+      api.getAnalistas().then((analysts) => {
+        setAnalystsList(analysts);
+      });
+    } catch (err) {
+      console.error("Error fetching analysts:", err);
+      setError(
+        "No se pudo conectar con el servidor. Asegúrate que el backend esté corriendo."
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!currentUser) return;
+    updateAssets();
+  }, [currentUser, updateAssets]);
 
   const isAnalyst = currentUser?.role === "Analyst";
 
@@ -396,7 +398,7 @@ export default function App() {
 
           {/* VIEW: INVENTORY */}
           {activeTab === "vulnerabilities" && !selectedAsset && (
-            <Parchados currentUser={currentUser} />
+            <Parchados currentUser={currentUser} updateAssets={updateAssets}/>
           )}
 
           {/* VIEW: DETAIL */}

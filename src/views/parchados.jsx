@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { Calendar } from "lucide-react";
 import api from "../data/api.js";
-export const Parchados = ({ currentUser }) => {
+export const Parchados = ({ currentUser, updateAssets }) => {
   const [vulnerabilidades, setVulnerabilidades] = useState([]);
   const [selectedVuln, setSelectedVuln] = useState(null);
   const [machineNames, setMachineNames] = useState("");
@@ -30,7 +30,8 @@ export const Parchados = ({ currentUser }) => {
     }).catch((error) => {
       setMessage("Error parchando vulnerabilidades." + error.message);
     });
-
+    // refrescar la lista de vulnerabilidades
+    updateAssets();
   };
   return (
     <div className="p-6">
