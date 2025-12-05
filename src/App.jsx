@@ -125,6 +125,7 @@ export default function App() {
         } else {
           data = await api.getEquiposAnalista(currentUser.id);
         }
+        console.log(data)
         const formattedAssets = data.map((equipo) => ({
           id: equipo.id,
           name: equipo.assetName, // Mapeo de assetName -> name
@@ -150,6 +151,11 @@ export default function App() {
                       v.EquipoVulnerabilidad.fechaDetectada
                     ).toLocaleDateString()
                   : "N/A",
+                lastPatched: v.EquipoVulnerabilidad?.fechaParchado
+                  ? new Date(
+                      v.EquipoVulnerabilidad.fechaParchado
+                    ).toLocaleDateString()
+                  : null,
               }))
             : [],
 

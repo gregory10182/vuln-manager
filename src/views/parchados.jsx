@@ -10,28 +10,27 @@ export const Parchados = ({ currentUser }) => {
   const [message, setMessage] = useState("");
   useEffect(() => {
     api.getVulnerabilidades(currentUser.id).then((data) => {
-      console.log(data);
-      // extraer solo las vulnerabilidades unicas
+      // extraer solo las vulnerabilidades unicas basado en el productName
       const uniqueVulns = [];
-      const vulnIds = new Set();
       data.forEach((equipo) => {
         equipo.vulnerabilidades.forEach((vuln) => {
-          if (!vulnIds.has(vuln.id)) {
-            vulnIds.add(vuln.id);
-            uniqueVulns.push(vuln);
+          if(!uniqueVulns.find((v) => v === vuln.productName)) {
+            uniqueVulns.push(vuln.productName);
           }
         });
       });
-      console.log(uniqueVulns);
       setVulnerabilidades(uniqueVulns);
     });
   }, [currentUser]);
   const handlePatch = () => {
-    if (!selectedVuln || !machineNames || !patchDate) {
-      setMessage("Por favor, completa todos los campos.");
-      return;
-    }
-    // Aquí iría la lógica para actualizar la fecha de parchado masivamente
+
+    api.parcharVulnerabilidadesMasivo(selectedVuln, machineNames.split("\n")).then((response) => {
+      setMessage("Vulnerabilidades parchadas exitosamente.");
+      console.log(response);
+    }).catch((error) => {
+      setMessage("Error parchando vulnerabilidades." + error.message);
+    });
+
   };
   return (
     <div className="p-6">
@@ -54,8 +53,8 @@ export const Parchados = ({ currentUser }) => {
             -- Selecciona una vulnerabilidad --
           </option>
           {vulnerabilidades.map((vuln) => (
-            <option key={vuln.id} value={vuln.id}>
-              {vuln.vulnName} (ID: {vuln.id})
+            <option key={vuln} value={vuln}>
+              {vuln}
             </option>
           ))}
         </select>

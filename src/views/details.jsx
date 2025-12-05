@@ -137,6 +137,9 @@ export const Details = ({ selectedAsset, setSelectedAsset }) => {
                         <p className="text-sm text-gray-500 mt-1">
                           Detectado: {vuln.date}
                         </p>
+                        <p className="text-sm text-gray-500 mt-1">
+                          Último Parchado: {vuln.lastPatched || "N/A"}
+                        </p>
                       </div>
                       <div className="flex items-center gap-3 self-end sm:self-auto">
                         <StatusBadge status={vuln.status} />
