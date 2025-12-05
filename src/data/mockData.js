@@ -102,7 +102,7 @@ export const generateMockAssets = () => {
         const numVulns = Math.floor(Math.random() * 4) + 1;
         const shuffledVulns = [...VULN_POOL].sort(() => 0.5 - Math.random());
 
-        vulnerabilities = shuffledVulns.slice(0, numVulns).map((v, idx) => ({
+        vulnerabilities = shuffledVulns.slice(0, numVulns)?.map((v, idx) => ({
           id: idCounter * 1000 + idx,
           cve: v.cve,
           name: v.name,

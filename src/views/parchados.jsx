@@ -54,7 +54,7 @@ export const Parchados = ({ currentUser, updateAssets }) => {
           <option value="" disabled>
             -- Selecciona una vulnerabilidad --
           </option>
-          {vulnerabilidades.map((vuln) => (
+          {vulnerabilidades?.map((vuln) => (
             <option key={vuln} value={vuln}>
               {vuln}
             </option>

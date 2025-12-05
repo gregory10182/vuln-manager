@@ -42,7 +42,7 @@ export const Inventory = ({
         <div className="flex gap-2 relative flex-wrap">
           <button
             onClick={() => {
-              const assetNames = filteredAssets.map((a) => a.name).join("\n");
+              const assetNames = filteredAssets?.map((a) => a.name).join("\n");
               navigator.clipboard.writeText(assetNames);
               setTimedNotification({
                 message: "Lista de workstations copiada.",
@@ -56,7 +56,7 @@ export const Inventory = ({
 
           <button
             onClick={() => {
-              const assetIPs = filteredAssets.map((a) => a.ip).join("\n");
+              const assetIPs = filteredAssets?.map((a) => a.ip).join("\n");
               navigator.clipboard.writeText(assetIPs);
               setTimedNotification({
                 message: "Lista de IPs copiada.",
@@ -112,7 +112,7 @@ export const Inventory = ({
                       }
                     >
                       <option value="Todos">Todos</option>
-                      {analystsList.map((opt) => (
+                      {analystsList?.map((opt) => (
                         <option key={opt} value={opt}>
                           {opt}
                         </option>
@@ -192,7 +192,7 @@ export const Inventory = ({
           </thead>
           <tbody className="divide-y divide-gray-200">
             {filteredAssets.length > 0 ? (
-              filteredAssets.map((asset) => (
+              filteredAssets?.map((asset) => (
                 <tr
                   key={asset.id}
                   onClick={() => setSelectedAsset(asset)}

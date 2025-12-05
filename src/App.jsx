@@ -110,7 +110,7 @@ export default function App() {
           data = await api.getEquiposAnalista(currentUser.id);
         }
         console.log(data)
-        const formattedAssets = data.map((equipo) => ({
+        const formattedAssets = data?.map((equipo) => ({
           id: equipo.id,
           name: equipo.assetName, // Mapeo de assetName -> name
           ip: equipo.IP,
@@ -123,7 +123,7 @@ export default function App() {
 
           // Transformar vulnerabilidades y datos de la tabla intermedia
           vulnerabilities: equipo.vulnerabilidades
-            ? equipo.vulnerabilidades.map((v) => ({
+            ? equipo.vulnerabilidades?.map((v) => ({
                 id: v.id,
                 cve: `Plugin ${v.pluginId}`, // Usamos pluginId como identificador visual
                 name: v.vulnName,

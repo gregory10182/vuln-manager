@@ -90,7 +90,7 @@ export const Details = ({ selectedAsset, setSelectedAsset }) => {
               </div>
             ) : (
               <div className="divide-y divide-gray-100">
-                {selectedAsset.vulnerabilities.map((vuln) => {
+                {selectedAsset.vulnerabilities?.map((vuln) => {
                   const isOffice =
                     vuln.name.toLowerCase().includes("office") ||
                     vuln.name.toLowerCase().includes("outlook");
