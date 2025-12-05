@@ -101,6 +101,7 @@ export default function App() {
   };
 
   const updateAssets = async () => {
+    console.log("Updating assets...");
       try {
         let data;
         if (currentUser.role === "Admin") {
@@ -157,6 +158,8 @@ export default function App() {
       }
   };
 
+  
+
   useEffect(() => {
     try {
       api.getAnalistas().then((analysts) => {
@@ -175,7 +178,7 @@ export default function App() {
   useEffect(() => {
     if (!currentUser) return;
     updateAssets();
-  }, [currentUser, updateAssets]);
+  }, [currentUser]);
 
   const isAnalyst = currentUser?.role === "Analyst";
 
@@ -398,7 +401,7 @@ export default function App() {
 
           {/* VIEW: INVENTORY */}
           {activeTab === "vulnerabilities" && !selectedAsset && (
-            <Parchados currentUser={currentUser} updateAssets={updateAssets}/>
+            <Parchados currentUser={currentUser} updateAssets={() => {updateAssets()}}/>
           )}
 
           {/* VIEW: DETAIL */}

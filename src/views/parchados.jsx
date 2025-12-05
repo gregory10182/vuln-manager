@@ -27,11 +27,12 @@ export const Parchados = ({ currentUser, updateAssets }) => {
     api.parcharVulnerabilidadesMasivo(selectedVuln, machineNames.split("\n")).then((response) => {
       setMessage("Vulnerabilidades parchadas exitosamente.");
       console.log(response);
+      updateAssets();
     }).catch((error) => {
       setMessage("Error parchando vulnerabilidades." + error.message);
     });
     // refrescar la lista de vulnerabilidades
-    updateAssets();
+    
   };
   return (
     <div className="p-6">
