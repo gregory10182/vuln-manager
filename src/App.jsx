@@ -102,63 +102,64 @@ export default function App() {
 
   const updateAssets = async () => {
     console.log("Updating assets...");
-      try {
-        let data;
-        if (currentUser.role === "Admin") {
-          data = await api.getEquipos();
-        } else {
-          data = await api.getEquiposAnalista(currentUser.id);
-        }
-        console.log(data)
-        const formattedAssets = data?.map((equipo) => ({
-          id: equipo.id,
-          name: equipo.assetName, // Mapeo de assetName -> name
-          ip: equipo.IP,
-          os: equipo.SO,
-          user: equipo.UserID,
-          type: equipo.type,
-          // Acceso seguro a la relación 'analista' (puede venir null)
-          analyst: equipo.analista ? equipo.analista.name : "Sin Asignar",
-          status: "Operational", // <--- CAMBIO AQUÍ: Usamos 'Operational' para evitar conflicto con vulnerabilidad 'Active'
-
-          // Transformar vulnerabilidades y datos de la tabla intermedia
-          vulnerabilities: equipo.vulnerabilidades
-            ? equipo.vulnerabilidades?.map((v) => ({
-                id: v.id,
-                cve: `Plugin ${v.pluginId}`, // Usamos pluginId como identificador visual
-                name: v.vulnName,
-                severity: v.severity,
-                // Datos de la tabla intermedia (EquipoVulnerabilidad)
-                status: v.EquipoVulnerabilidad?.estado || "Unknown",
-                date: v.EquipoVulnerabilidad?.fechaDetectada
-                  ? new Date(
-                      v.EquipoVulnerabilidad.fechaDetectada
-                    ).toLocaleDateString()
-                  : "N/A",
-                lastPatched: v.EquipoVulnerabilidad?.fechaParchado
-                  ? new Date(
-                      v.EquipoVulnerabilidad.fechaParchado
-                    ).toLocaleDateString()
-                  : null,
-              }))
-            : [],
-
-          // Calcular riesgo en el cliente
-          riskScore: calculateRiskScore(equipo.vulnerabilidades),
-        }));
-
-        setAssets(formattedAssets);
-      } catch (err) {
-        console.error("Error fetching assets:", err);
-        setError(
-          "No se pudo conectar con el servidor. Asegúrate que el backend esté corriendo."
-        );
-      } finally {
-        setIsLoading(false);
+    try {
+      let data;
+      if (currentUser.role === "Admin") {
+        data = await api.getEquipos();
+      } else {
+        data = await api.getEquiposAnalista(currentUser.id);
       }
-  };
+      console.log(data);
+      const formattedAssets = data?.map((equipo) => ({
+        id: equipo.id,
+        name: equipo.assetName, // Mapeo de assetName -> name
+        ip: equipo.IP,
+        os: equipo.SO,
+        user: equipo.UserID,
+        type: equipo.type,
+        // Acceso seguro a la relación 'analista' (puede venir null)
+        analyst: equipo.analista ? equipo.analista.name : "Sin Asignar",
+        status: "Operational", // <--- CAMBIO AQUÍ: Usamos 'Operational' para evitar conflicto con vulnerabilidad 'Active'
 
-  
+        // Transformar vulnerabilidades y datos de la tabla intermedia
+        vulnerabilities: equipo.vulnerabilidades
+          ? equipo.vulnerabilidades?.map((v) => ({
+              id: v.id,
+              cve: `Plugin ${v.pluginId}`, // Usamos pluginId como identificador visual
+              name: v.vulnName,
+              severity: v.severity,
+              // Datos de la tabla intermedia (EquipoVulnerabilidad)
+              status: v.EquipoVulnerabilidad?.estado || "Unknown",
+              date: v.EquipoVulnerabilidad?.fechaDetectada
+                ? new Date(
+                    v.EquipoVulnerabilidad.fechaDetectada
+                  ).toLocaleDateString()
+                : "N/A",
+              lastPatched: v.EquipoVulnerabilidad?.fechaParchado
+                ? // Formatear fecha parchado dd/mm/yyyy como viene de la base de datos sin ajustar a hora local
+                  new Date(
+                    v.EquipoVulnerabilidad.fechaParchado
+                  ).toLocaleDateString("es-CL", {
+                    timeZone: "UTC",
+                  })
+                : null,
+            }))
+          : [],
+
+        // Calcular riesgo en el cliente
+        riskScore: calculateRiskScore(equipo.vulnerabilidades),
+      }));
+
+      setAssets(formattedAssets);
+    } catch (err) {
+      console.error("Error fetching assets:", err);
+      setError(
+        "No se pudo conectar con el servidor. Asegúrate que el backend esté corriendo."
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     try {
@@ -202,9 +203,18 @@ export default function App() {
 
       const matchesVulnName =
         filters.vulnName === "" ||
-        asset.vulnerabilities.some((v) =>
-          v.name.toLowerCase().includes(filters.vulnName.toLowerCase())
-        ); // Nota: Aquí filtramos por estado 'Open' en búsqueda rápida, ajustable según necesidad
+        asset.vulnerabilities.some((v) => {
+          if (filters.todayDate === true) {
+            return (
+              v.name.toLowerCase().includes(filters.vulnName.toLowerCase()) &&
+              v.lastPatched !== new Date().toLocaleDateString()
+            );
+          } else {
+            return v.name
+              .toLowerCase()
+              .includes(filters.vulnName.toLowerCase());
+          }
+        }); // Nota: Aquí filtramos por estado 'Open' en búsqueda rápida, ajustable según necesidad
 
       const matchesRisk = asset.riskScore >= filters.minRisk;
 
@@ -401,7 +411,12 @@ export default function App() {
 
           {/* VIEW: INVENTORY */}
           {activeTab === "vulnerabilities" && !selectedAsset && (
-            <Parchados currentUser={currentUser} updateAssets={() => {updateAssets()}}/>
+            <Parchados
+              currentUser={currentUser}
+              updateAssets={() => {
+                updateAssets();
+              }}
+            />
           )}
 
           {/* VIEW: DETAIL */}

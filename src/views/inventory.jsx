@@ -157,6 +157,27 @@ export const Inventory = ({
                     }
                   />
                 </div>
+                {/* filtro que quita las vulnerabilidades con fechasParchado de hoy */}
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="todayPatchFilter"
+                    checked={filters.todayDate || false}
+                    onChange={(e) =>
+                      setFilters({
+                        ...filters,
+                        todayDate: e.target.checked,
+                      })
+                    }
+                  />
+                  <label
+                    htmlFor="todayPatchFilter"
+                    className="text-sm text-gray-600"
+                  >
+                    Mostrar solo workstations con vulnerabilidades sin parchar
+                    hoy
+                  </label>
+                </div>
                 <div className="pt-2 border-t border-gray-100 flex gap-2">
                   <button
                     onClick={resetFilters}

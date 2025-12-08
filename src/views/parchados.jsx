@@ -14,7 +14,7 @@ export const Parchados = ({ currentUser, updateAssets }) => {
       const uniqueVulns = [];
       data.forEach((equipo) => {
         equipo.vulnerabilidades.forEach((vuln) => {
-          if(!uniqueVulns.find((v) => v === vuln.productName)) {
+          if (!uniqueVulns.find((v) => v === vuln.productName)) {
             uniqueVulns.push(vuln.productName);
           }
         });
@@ -23,16 +23,21 @@ export const Parchados = ({ currentUser, updateAssets }) => {
     });
   }, [currentUser]);
   const handlePatch = () => {
-
-    api.parcharVulnerabilidadesMasivo(selectedVuln, machineNames.split("\n")).then((response) => {
-      setMessage("Vulnerabilidades parchadas exitosamente.");
-      console.log(response);
-      updateAssets();
-    }).catch((error) => {
-      setMessage("Error parchando vulnerabilidades." + error.message);
-    });
+    api
+      .parcharVulnerabilidadesMasivo(
+        selectedVuln,
+        machineNames.split("\n"),
+        patchDate
+      )
+      .then((response) => {
+        setMessage("Vulnerabilidades parchadas exitosamente.");
+        console.log(response);
+        updateAssets();
+      })
+      .catch((error) => {
+        setMessage("Error parchando vulnerabilidades." + error.message);
+      });
     // refrescar la lista de vulnerabilidades
-    
   };
   return (
     <div className="p-6">

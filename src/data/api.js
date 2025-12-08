@@ -42,11 +42,16 @@ const getVulnerabilidades = async (analistaId) => {
   }
 };
 
-const parcharVulnerabilidadesMasivo = async (producto, machineNames) => {
+const parcharVulnerabilidadesMasivo = async (
+  producto,
+  machineNames,
+  patchDate
+) => {
   try {
     const response = await axios.patch(apiUrl + "vulns/parchar-masivo", {
       producto,
       machineNames,
+      fechaParchado: patchDate || null,
     });
     return response.data;
   } catch (error) {
@@ -60,5 +65,5 @@ export default {
   getEquiposAnalista,
   getAnalistas,
   getVulnerabilidades,
-  parcharVulnerabilidadesMasivo
+  parcharVulnerabilidadesMasivo,
 };
