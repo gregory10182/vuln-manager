@@ -109,7 +109,7 @@ export default function App() {
       } else {
         data = await api.getEquiposAnalista(currentUser.id);
       }
-      console.log(data);
+      // console.log(data);
       const formattedAssets = data?.map((equipo) => ({
         id: equipo.id,
         name: equipo.assetName, // Mapeo de assetName -> name

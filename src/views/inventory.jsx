@@ -19,9 +19,9 @@ export const Inventory = ({
   analystsList,
   setSelectedAsset,
 }) => {
-  console.log("Filtered Assets:", filteredAssets);
+  // console.log("Filtered Assets:", filteredAssets);
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden h-full flex flex-col">
       <div className="p-4 border-b border-gray-200 flex flex-col sm:flex-row gap-4 justify-between bg-gray-50">
         {/* Search */}
         <div className="relative w-full sm:w-96">
@@ -82,7 +82,7 @@ export const Inventory = ({
             <Filter size={16} />
             Filtros
           </button>
-
+          {/*El recuadro de filtros se oculta cuando hay muy pocos equipos en lista porque el div se hace pequeño */}
           {showFilters && (
             <div className="absolute right-0 top-12 w-full sm:w-80 bg-white rounded-xl shadow-xl border border-gray-200 p-5 z-50 animate-in fade-in slide-in-from-top-2">
               <div className="flex justify-between items-center mb-4">
@@ -174,8 +174,7 @@ export const Inventory = ({
                     htmlFor="todayPatchFilter"
                     className="text-sm text-gray-600"
                   >
-                    Mostrar solo workstations con vulnerabilidades sin parchar
-                    hoy
+                    Ocultar equipos parchados hoy
                   </label>
                 </div>
                 <div className="pt-2 border-t border-gray-100 flex gap-2">
