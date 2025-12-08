@@ -179,7 +179,7 @@ export default function App() {
   useEffect(() => {
     if (!currentUser) return;
     updateAssets();
-  }, [currentUser]);
+  }, [currentUser, activeTab]);
 
   const isAnalyst = currentUser?.role === "Analyst";
 
