@@ -5,6 +5,7 @@ import { StatusBadge } from "../components/StatusBadge.jsx";
 import { RiskMeter } from "../components/RiskMeter.jsx";
 
 export const Details = ({ selectedAsset, setSelectedAsset }) => {
+  // console.log("Selected Asset:", selectedAsset);
   return (
     <div className="animate-fade-in pb-8">
       <button
@@ -98,11 +99,12 @@ export const Details = ({ selectedAsset, setSelectedAsset }) => {
                     vuln.name.toLowerCase().includes("chrome") ||
                     vuln.name.toLowerCase().includes("edge");
                   const isAdobe = vuln.name.toLowerCase().includes("adobe");
+                  const isError = vuln.error === true;
                   return (
                     <div
                       key={vuln.id}
                       className={`p-4 hover:bg-gray-50 flex flex-col sm:flex-row gap-4 sm:items-center border-l-4 ${
-                        isOffice
+                          isOffice
                           ? "border-orange-400 bg-orange-50"
                           : isBrowser
                           ? "border-blue-400 bg-blue-50"
@@ -130,6 +132,11 @@ export const Details = ({ selectedAsset, setSelectedAsset }) => {
                               PDF
                             </span>
                           )}
+                          {isError && (
+                            <span className="text-[10px] font-bold text-red-600 bg-white px-2 rounded border border-red-600">
+                              ERROR
+                            </span>
+                          )}
                         </div>
                         <p className="text-gray-800 font-medium text-sm sm:text-base">
                           {vuln.name}
@@ -140,6 +147,11 @@ export const Details = ({ selectedAsset, setSelectedAsset }) => {
                         <p className="text-sm text-gray-500 mt-1">
                           Último Parchado: {vuln.lastPatched || "N/A"}
                         </p>
+                        {vuln.error && (
+                        <div className="text-sm text-gray-500 mt-1">
+                          <strong>Error:</strong> {vuln.errorDescription}
+                        </div>
+                        )}
                       </div>
                       <div className="flex items-center gap-3 self-end sm:self-auto">
                         <StatusBadge status={vuln.status} />

@@ -109,7 +109,7 @@ export default function App() {
       } else {
         data = await api.getEquiposAnalista(currentUser.id);
       }
-      // console.log(data);
+      console.log(data);
       const formattedAssets = data?.map((equipo) => ({
         id: equipo.id,
         name: equipo.assetName, // Mapeo de assetName -> name
@@ -143,6 +143,8 @@ export default function App() {
                     timeZone: "UTC",
                   })
                 : null,
+              error : v.EquipoVulnerabilidad?.error,
+              errorDescription : v.EquipoVulnerabilidad?.errorMsj || null,
             }))
           : [],
 
@@ -409,13 +411,19 @@ export default function App() {
             />
           )}
 
-          {/* VIEW: INVENTORY */}
+          {/* VIEW: Parchado Masivo */}
           {activeTab === "vulnerabilities" && !selectedAsset && (
             <Parchados
               currentUser={currentUser}
-              updateAssets={() => {
-                updateAssets();
-              }}
+              activeTab={activeTab}
+            />
+          )}
+
+          {/* VIEW: Reporte de Errores */}
+          {activeTab === "errores" && !selectedAsset && (
+            <Parchados
+              currentUser={currentUser}
+              activeTab={activeTab}
             />
           )}
 

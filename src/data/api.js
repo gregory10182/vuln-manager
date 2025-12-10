@@ -60,10 +60,30 @@ const parcharVulnerabilidadesMasivo = async (
   }
 };
 
+const reportarErroresMasivo = async (
+  producto,
+  machineNames,
+  errorDescription
+) => {
+  try {
+    const response = await axios.patch(apiUrl + "vulns/reportar-error", {
+      producto,
+      machineNames,
+      mensaje: errorDescription,
+    });
+    return response.data;
+  }
+  catch (error) {
+    console.error("Error reportando errores:", error);
+    throw error;
+  }
+};
+
 export default {
   getEquipos,
   getEquiposAnalista,
   getAnalistas,
   getVulnerabilidades,
   parcharVulnerabilidadesMasivo,
+  reportarErroresMasivo,
 };

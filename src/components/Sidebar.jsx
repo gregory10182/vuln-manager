@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React from "react";
 
 import {
   LayoutDashboard,
@@ -87,10 +87,20 @@ export const Sidebar = ({
         />
         <SidebarItem
           icon={AlertTriangle}
-          label="Vulnerabilidades"
+          label="Parchado Masivo"
           active={activeTab === "vulnerabilities" && !selectedAsset}
           onClick={() => {
             setActiveTab("vulnerabilities");
+            setSelectedAsset(null);
+            setSidebarOpen(false);
+          }}
+        />
+        <SidebarItem
+          icon={AlertTriangle}
+          label="Reportar Errores"
+          active={activeTab === "errores" && !selectedAsset}
+          onClick={() => {
+            setActiveTab("errores");
             setSelectedAsset(null);
             setSidebarOpen(false);
           }}
