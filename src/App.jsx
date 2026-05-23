@@ -26,10 +26,12 @@ export default function App() {
 
   const [activeTab, setActiveTab] = useState("dashboard");
   const [selectedAsset, setSelectedAsset] = useState(null);
+  const [selectedAssetIds, setSelectedAssetIds] = useState(new Set());
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const [historial, setHistorial] = useState([]);
   const [historialLoading, setHistorialLoading] = useState(false);
+  const [initialMachines, setInitialMachines] = useState("");
 
   const fileInputRef = useRef(null);
 
@@ -87,6 +89,8 @@ export default function App() {
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
+    setSelectedAsset(null);
+    setSelectedAssetIds(new Set());
     if (tab === "historial") {
       fetchHistorial();
     }
@@ -108,6 +112,16 @@ export default function App() {
       message: "Datos actualizados correctamente.",
       type: "success",
     });
+  };
+
+  const handleBulkPatch = () => {
+    const machines = filteredAssets
+      .filter((a) => selectedAssetIds.has(a.id))
+      .map((a) => a.name)
+      .join("\n");
+    setInitialMachines(machines);
+    setSelectedAssetIds(new Set());
+    setActiveTab("vulnerabilities");
   };
 
   if (!currentUser) {
@@ -234,6 +248,9 @@ export default function App() {
               setSelectedAsset={setSelectedAsset}
               isAnalyst={isAnalyst}
               analystsList={analystsList}
+              selectedAssetIds={selectedAssetIds}
+              setSelectedAssetIds={setSelectedAssetIds}
+              onBulkPatch={handleBulkPatch}
             />
           )}
 
@@ -242,6 +259,8 @@ export default function App() {
               currentUser={currentUser}
               activeTab={activeTab}
               onComplete={handleOperationComplete}
+              initialMachines={initialMachines}
+              onMachinesConsumed={() => setInitialMachines("")}
             />
           )}
 
@@ -250,6 +269,8 @@ export default function App() {
               currentUser={currentUser}
               activeTab={activeTab}
               onComplete={handleOperationComplete}
+              initialMachines={initialMachines}
+              onMachinesConsumed={() => setInitialMachines("")}
             />
           )}
 

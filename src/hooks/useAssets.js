@@ -31,21 +31,29 @@ export function useAssets(currentUser) {
         analyst: equipo.analista ? equipo.analista.name : "Sin Asignar",
         status: "Operational",
         vulnerabilities: equipo.vulnerabilidades
-          ? equipo.vulnerabilidades?.map((v) => ({
-              id: v.id,
-              cve: `Plugin ${v.pluginId}`,
-              name: v.vulnName,
-              severity: v.severity,
-              status: v.EquipoVulnerabilidad?.estado || "Unknown",
-              date: v.EquipoVulnerabilidad?.fechaDetectada
-                ? new Date(v.EquipoVulnerabilidad.fechaDetectada).toLocaleDateString()
-                : "N/A",
-              lastPatched: v.EquipoVulnerabilidad?.fechaParchado
-                ? v.EquipoVulnerabilidad.fechaParchado.substring(0, 10)
-                : null,
-              error: v.EquipoVulnerabilidad?.error,
-              errorDescription: v.EquipoVulnerabilidad?.errorMsj || null,
-            }))
+          ? equipo.vulnerabilidades?.map((v) => {
+              const detectada = v.EquipoVulnerabilidad?.fechaDetectada;
+              const diasAbierto = detectada
+                ? Math.floor((Date.now() - new Date(detectada).getTime()) / 86400000)
+                : null;
+
+              return {
+                id: v.id,
+                cve: `Plugin ${v.pluginId}`,
+                name: v.vulnName,
+                severity: v.severity,
+                status: v.EquipoVulnerabilidad?.estado || "Unknown",
+                date: detectada
+                  ? new Date(detectada).toLocaleDateString()
+                  : "N/A",
+                diasAbierto,
+                lastPatched: v.EquipoVulnerabilidad?.fechaParchado
+                  ? v.EquipoVulnerabilidad.fechaParchado.substring(0, 10)
+                  : null,
+                error: v.EquipoVulnerabilidad?.error,
+                errorDescription: v.EquipoVulnerabilidad?.errorMsj || null,
+              };
+            })
           : [],
         riskScore: calculateRiskScore(equipo.vulnerabilidades),
       }));

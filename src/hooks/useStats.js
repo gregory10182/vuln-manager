@@ -4,7 +4,13 @@ import { OPEN_STATUSES } from "../data/constants.js";
 export function useStats(filteredAssets, currentUser) {
   return useMemo(() => {
     if (!currentUser)
-      return { totalAssets: 0, criticalAssets: 0, appVulns: 0, avgRisk: 0 };
+      return {
+        totalAssets: 0,
+        criticalAssets: 0,
+        appVulns: 0,
+        avgRisk: 0,
+        criticasMas30Dias: 0,
+      };
 
     const totalAssets = filteredAssets.length;
     const criticalAssets = filteredAssets.filter((a) => a.riskScore > 70).length;
@@ -22,6 +28,19 @@ export function useStats(filteredAssets, currentUser) {
       0
     );
 
+    const criticasMas30Dias = filteredAssets.reduce(
+      (acc, curr) =>
+        acc +
+        curr.vulnerabilities.filter(
+          (v) =>
+            v.severity === "Critical" &&
+            OPEN_STATUSES.includes(v.status) &&
+            v.diasAbierto !== null &&
+            v.diasAbierto > 30
+        ).length,
+      0
+    );
+
     const avgRisk =
       totalAssets > 0
         ? Math.round(
@@ -30,6 +49,6 @@ export function useStats(filteredAssets, currentUser) {
           )
         : 0;
 
-    return { totalAssets, criticalAssets, appVulns, avgRisk };
+    return { totalAssets, criticalAssets, appVulns, avgRisk, criticasMas30Dias };
   }, [filteredAssets, currentUser]);
 }

@@ -1,7 +1,11 @@
 import React from "react";
-
-import { Laptop, Search, ChevronRight, Filter, X } from "lucide-react";
-
+import {
+  Laptop,
+  Search,
+  ChevronRight,
+  Filter,
+  X,
+} from "lucide-react";
 import { RiskMeter } from "../components/RiskMeter.jsx";
 import { StatusBadge } from "../components/StatusBadge.jsx";
 
@@ -18,12 +22,37 @@ export const Inventory = ({
   resetFilters,
   analystsList,
   setSelectedAsset,
+  selectedAssetIds,
+  setSelectedAssetIds,
+  onBulkPatch,
 }) => {
-  // console.log("Filtered Assets:", filteredAssets);
+  const allSelected =
+    filteredAssets.length > 0 &&
+    filteredAssets.every((a) => selectedAssetIds.has(a.id));
+
+  const toggleAll = () => {
+    if (allSelected) {
+      setSelectedAssetIds(new Set());
+    } else {
+      setSelectedAssetIds(new Set(filteredAssets.map((a) => a.id)));
+    }
+  };
+
+  const toggleOne = (id) => {
+    const next = new Set(selectedAssetIds);
+    if (next.has(id)) {
+      next.delete(id);
+    } else {
+      next.add(id);
+    }
+    setSelectedAssetIds(next);
+  };
+
+  const selectedCount = selectedAssetIds.size;
+
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden h-full flex flex-col">
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden h-full flex flex-col relative">
       <div className="p-4 border-b border-gray-200 flex flex-col sm:flex-row gap-4 justify-between bg-gray-50">
-        {/* Search */}
         <div className="relative w-full sm:w-96">
           <Search
             className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
@@ -39,7 +68,6 @@ export const Inventory = ({
           />
         </div>
 
-        {/* Toolbar Actions */}
         <div className="flex gap-2 relative flex-wrap">
           <button
             onClick={() => {
@@ -85,13 +113,14 @@ export const Inventory = ({
             <Filter size={16} />
             Filtros
           </button>
-          {/*El recuadro de filtros se oculta cuando hay muy pocos equipos en lista porque el div se hace pequeño */}
+
           {showFilters && (
             <div className="absolute right-0 top-12 w-full sm:w-80 bg-white rounded-xl shadow-xl border border-gray-200 p-5 z-50 animate-in fade-in slide-in-from-top-2">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="font-semibold text-gray-800">Filtros</h3>
                 <button
                   onClick={() => setShowFilters(false)}
+                  aria-label="Cerrar filtros"
                   className="text-gray-400 hover:text-gray-600"
                 >
                   <X size={18} />
@@ -109,10 +138,7 @@ export const Inventory = ({
                       className="w-full p-2 border border-gray-300 rounded-md text-sm bg-white outline-none"
                       value={filters.analyst}
                       onChange={(e) =>
-                        setFilters({
-                          ...filters,
-                          analyst: e.target.value,
-                        })
+                        setFilters({ ...filters, analyst: e.target.value })
                       }
                     >
                       <option value="Todos">Todos</option>
@@ -135,10 +161,7 @@ export const Inventory = ({
                     placeholder="Ej: Chrome"
                     value={filters.vulnName}
                     onChange={(e) =>
-                      setFilters({
-                        ...filters,
-                        vulnName: e.target.value,
-                      })
+                      setFilters({ ...filters, vulnName: e.target.value })
                     }
                   />
                 </div>
@@ -163,23 +186,16 @@ export const Inventory = ({
                     }
                   />
                 </div>
-                {/* filtro que quita las vulnerabilidades con fechasParchado de hoy */}
                 <div className="flex items-center gap-2">
                   <input
                     type="checkbox"
                     id="todayPatchFilter"
                     checked={filters.todayDate || false}
                     onChange={(e) =>
-                      setFilters({
-                        ...filters,
-                        todayDate: e.target.checked,
-                      })
+                      setFilters({ ...filters, todayDate: e.target.checked })
                     }
                   />
-                  <label
-                    htmlFor="todayPatchFilter"
-                    className="text-sm text-gray-600"
-                  >
+                  <label htmlFor="todayPatchFilter" className="text-sm text-gray-600">
                     Ocultar equipos parchados hoy
                   </label>
                 </div>
@@ -203,10 +219,19 @@ export const Inventory = ({
         </div>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto flex-1">
         <table className="w-full text-left text-sm whitespace-nowrap">
-          <thead className="bg-gray-50 text-gray-500 font-medium border-b border-gray-200">
+          <thead className="bg-gray-50 text-gray-500 font-medium border-b border-gray-200 sticky top-0 z-10">
             <tr>
+              <th className="px-4 py-3 w-10">
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  onChange={toggleAll}
+                  aria-label="Seleccionar todos"
+                  className="rounded"
+                />
+              </th>
               <th className="px-6 py-3">Workstation</th>
               {!isAnalyst && <th className="px-6 py-3">Analista</th>}
               <th className="px-6 py-3">Usuario</th>
@@ -221,10 +246,21 @@ export const Inventory = ({
               filteredAssets?.map((asset) => (
                 <tr
                   key={asset.id}
-                  onClick={() => setSelectedAsset(asset)}
                   className="hover:bg-blue-50 cursor-pointer transition-colors group"
                 >
-                  <td className="px-6 py-4">
+                  <td
+                    className="px-4 py-4"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedAssetIds.has(asset.id)}
+                      onChange={() => toggleOne(asset.id)}
+                      aria-label={`Seleccionar ${asset.name}`}
+                      className="rounded"
+                    />
+                  </td>
+                  <td className="px-6 py-4" onClick={() => setSelectedAsset(asset)}>
                     <div className="flex items-center gap-3">
                       <div className="p-2 rounded-lg bg-blue-100 text-blue-600">
                         <Laptop size={18} />
@@ -238,23 +274,23 @@ export const Inventory = ({
                     </div>
                   </td>
                   {!isAnalyst && (
-                    <td className="px-6 py-4 text-gray-700">
+                    <td className="px-6 py-4 text-gray-700" onClick={() => setSelectedAsset(asset)}>
                       <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-50 text-purple-700 border border-purple-100">
                         {asset.analyst}
                       </span>
                     </td>
                   )}
-                  <td className="px-6 py-4 text-gray-600">{asset.user}</td>
-                  <td className="px-6 py-4 font-mono text-gray-500">
+                  <td className="px-6 py-4 text-gray-600" onClick={() => setSelectedAsset(asset)}>{asset.user}</td>
+                  <td className="px-6 py-4 font-mono text-gray-500" onClick={() => setSelectedAsset(asset)}>
                     {asset.ip}
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4" onClick={() => setSelectedAsset(asset)}>
                     <RiskMeter score={asset.riskScore} />
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4" onClick={() => setSelectedAsset(asset)}>
                     <StatusBadge status={asset.status} />
                   </td>
-                  <td className="px-6 py-4 text-right">
+                  <td className="px-6 py-4 text-right" onClick={() => setSelectedAsset(asset)}>
                     <ChevronRight
                       className="inline-block text-gray-300 group-hover:text-blue-500"
                       size={20}
@@ -264,7 +300,7 @@ export const Inventory = ({
               ))
             ) : (
               <tr>
-                <td colSpan="7" className="py-12 text-center text-gray-500">
+                <td colSpan={isAnalyst ? 7 : 8} className="py-12 text-center text-gray-500">
                   <div className="flex flex-col items-center justify-center">
                     <Search size={48} className="text-gray-200 mb-4" />
                     <p>No se encontraron resultados.</p>
@@ -281,6 +317,28 @@ export const Inventory = ({
           </tbody>
         </table>
       </div>
+
+      {selectedCount > 0 && (
+        <div className="sticky bottom-0 bg-blue-600 text-white px-6 py-3 flex items-center justify-between shadow-lg">
+          <span className="text-sm font-medium">
+            {selectedCount} equipo{selectedCount !== 1 ? "s" : ""} seleccionado{selectedCount !== 1 ? "s" : ""}
+          </span>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setSelectedAssetIds(new Set())}
+              className="px-3 py-1.5 text-sm bg-blue-700 hover:bg-blue-800 rounded-lg transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={onBulkPatch}
+              className="px-4 py-1.5 text-sm bg-white text-blue-600 hover:bg-blue-50 font-medium rounded-lg transition-colors"
+            >
+              Parchar seleccionados
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import api from "../data/api.js";
 
-export const Parchados = ({ currentUser, activeTab, onComplete }) => {
+export const Parchados = ({ currentUser, activeTab, onComplete, initialMachines, onMachinesConsumed }) => {
   const [vulnerabilidades, setVulnerabilidades] = useState([]);
   const [selectedVuln, setSelectedVuln] = useState("");
   const [machineNames, setMachineNames] = useState("");
@@ -11,6 +11,13 @@ export const Parchados = ({ currentUser, activeTab, onComplete }) => {
   const [errorDescription, setErrorDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [validationError, setValidationError] = useState("");
+
+  useEffect(() => {
+    if (initialMachines) {
+      setMachineNames(initialMachines);
+      onMachinesConsumed?.();
+    }
+  }, [initialMachines, onMachinesConsumed]);
 
   useEffect(() => {
     let cancelled = false;

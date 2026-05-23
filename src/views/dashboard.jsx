@@ -3,13 +3,14 @@ import {
   Monitor,
   AppWindow,
   AlertTriangle,
+  Clock,
   Upload,
 } from "lucide-react";
 
 export const Dashboard = ({ stats, fileInputRef, handleFileUpload }) => {
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6">
         <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col">
           <span className="text-gray-500 text-sm font-medium">
             Total Asignado
@@ -47,6 +48,22 @@ export const Dashboard = ({ stats, fileInputRef, handleFileUpload }) => {
               {stats.criticalAssets}
             </span>
             <AlertTriangle className="text-red-500 opacity-20" size={32} />
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-xl border border-red-100 shadow-sm flex flex-col relative overflow-hidden">
+          <div className="absolute right-0 top-0 w-16 h-16 bg-red-500 opacity-5 rounded-bl-full"></div>
+          <span
+            className="text-red-600 text-sm font-medium"
+            title="Vulnerabilidades críticas abiertas por más de 30 días"
+          >
+            Fuera de SLA
+          </span>
+          <div className="flex items-end justify-between mt-2">
+            <span className="text-3xl font-bold text-red-600">
+              {stats.criticasMas30Dias}
+            </span>
+            <Clock className="text-red-500 opacity-20" size={32} />
           </div>
         </div>
 

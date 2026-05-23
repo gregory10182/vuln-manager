@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { StatusBadge } from "../components/StatusBadge.jsx";
 import { RiskMeter } from "../components/RiskMeter.jsx";
+import { OPEN_STATUSES } from "../data/constants.js";
 
 const fmtDate = (iso) => {
   if (!iso) return "N/A";
@@ -151,6 +152,19 @@ export const Details = ({ selectedAsset, setSelectedAsset }) => {
                         </p>
                         <p className="text-sm text-gray-500 mt-1">
                           Detectado: {vuln.date}
+                          {vuln.diasAbierto != null && OPEN_STATUSES.includes(vuln.status) && (
+                            <span
+                              className={`ml-2 px-1.5 py-0.5 rounded text-xs font-medium ${
+                                vuln.severity === "Critical" && vuln.diasAbierto > 30
+                                  ? "bg-red-100 text-red-700"
+                                  : vuln.diasAbierto > 15
+                                  ? "bg-orange-100 text-orange-700"
+                                  : "bg-gray-100 text-gray-600"
+                              }`}
+                            >
+                              {vuln.diasAbierto}d
+                            </span>
+                          )}
                         </p>
                         <p className="text-sm text-gray-500 mt-1">
                           Último Parchado: {fmtDate(vuln.lastPatched)}
