@@ -1,11 +1,19 @@
 import React from "react";
-
-import { Laptop, MoreVertical, CheckCircle } from "lucide-react";
+import {
+  Laptop,
+  MoreVertical,
+  CheckCircle,
+} from "lucide-react";
 import { StatusBadge } from "../components/StatusBadge.jsx";
 import { RiskMeter } from "../components/RiskMeter.jsx";
 
+const fmtDate = (iso) => {
+  if (!iso) return "N/A";
+  const [y, m, d] = iso.split("-");
+  return `${d}-${m}-${y}`;
+};
+
 export const Details = ({ selectedAsset, setSelectedAsset }) => {
-  // console.log("Selected Asset:", selectedAsset);
   return (
     <div className="animate-fade-in pb-8">
       <button
@@ -145,7 +153,7 @@ export const Details = ({ selectedAsset, setSelectedAsset }) => {
                           Detectado: {vuln.date}
                         </p>
                         <p className="text-sm text-gray-500 mt-1">
-                          Último Parchado: {vuln.lastPatched || "N/A"}
+                          Último Parchado: {fmtDate(vuln.lastPatched)}
                         </p>
                         {vuln.error && (
                         <div className="text-sm text-gray-500 mt-1">

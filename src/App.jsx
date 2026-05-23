@@ -1,309 +1,111 @@
-import React, { useState, useMemo, useRef, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
-  LayoutDashboard,
-  Monitor,
-  ShieldAlert,
-  Search,
-  User,
-  ChevronRight,
-  Filter,
-  X,
-  Upload,
-  LogOut,
-  AppWindow,
-  AlertTriangle,
-  CheckCircle,
-  MoreVertical,
-  Laptop,
   Menu,
-  Loader2, // Icono de carga
+  Loader2,
+  AlertTriangle,
 } from "lucide-react";
-
-// ==========================================
-// 1. CONFIGURACIÓN Y UTILS
-// ==========================================
-
-// Ajusta esto a la URL de tu backend
-const API_URL = "http://localhost:3000/equipos";
-
-// Función auxiliar para calcular riesgo basado en vulnerabilidades reales
-const calculateRiskScore = (vulns) => {
-  if (!vulns || vulns.length === 0) return 0;
-
-  let score = vulns.reduce((acc, v) => {
-    // Solo sumamos riesgo si la vulnerabilidad está abierta
-    const estado = v.EquipoVulnerabilidad?.estado || "Active";
-    if (estado === "Fixed" || estado === "Closed") return acc;
-
-    switch (v.severity?.toLowerCase()) {
-      case "critical":
-        return acc + 35;
-      case "high":
-        return acc + 20;
-      case "medium":
-        return acc + 10;
-      case "low":
-        return acc + 2;
-      default:
-        return acc + 1;
-    }
-  }, 0);
-
-  return Math.min(score, 100); // Cap en 100
-};
-
-// Importaciones de nuestros archivos nuevos
-import { INITIAL_ASSETS, ANALYSTS } from "./data/mockData";
 import { LoginScreen } from "./components/LoginScreen";
-import { StatusBadge } from "./components/StatusBadge";
-import { RiskMeter } from "./components/RiskMeter";
-import { Notification } from "./components/Notification";
 import { Sidebar } from "./components/Sidebar.jsx";
 import { Dashboard } from "./views/dashboard.jsx";
 import { Inventory } from "./views/inventory.jsx";
 import { Details } from "./views/details.jsx";
 import { Parchados } from "./views/parchados.jsx";
-
+import { Notification } from "./components/Notification";
+import { useNotification } from "./hooks/useNotification.js";
+import { useAssets } from "./hooks/useAssets.js";
+import { useFilters } from "./hooks/useFilters.js";
+import { useStats } from "./hooks/useStats.js";
 import api from "./data/api.js";
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
-
-  // Estado de datos
-  const [assets, setAssets] = useState([]);
   const [analystsList, setAnalystsList] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [analystsLoading, setAnalystsLoading] = useState(true);
+  const [analystsError, setAnalystsError] = useState(null);
 
   const [activeTab, setActiveTab] = useState("dashboard");
   const [selectedAsset, setSelectedAsset] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [notification, setNotification] = useState({
-    message: null,
-    type: "success",
-  });
-
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
   const fileInputRef = useRef(null);
 
-  const [showFilters, setShowFilters] = useState(false);
-  const [filters, setFilters] = useState({
-    analyst: "Todos",
-    vulnName: "",
-    minRisk: 0,
-  });
+  const { notification, showNotification, clearNotification } =
+    useNotification();
 
-  const setTimedNotification = ({ message, type }) => {
-    setNotification({ message, type });
-    setTimeout(() => {
-      setNotification({ message: null, type });
-    }, 3000);
-  };
+  const { assets, isLoading, error, refetch } = useAssets(currentUser);
 
-  const updateAssets = async () => {
-    console.log("Updating assets...");
-    try {
-      let data;
-      if (currentUser.role === "Admin") {
-        data = await api.getEquipos();
-      } else {
-        data = await api.getEquiposAnalista(currentUser.id);
-      }
-      console.log(data);
-      const formattedAssets = data?.map((equipo) => ({
-        id: equipo.id,
-        name: equipo.assetName, // Mapeo de assetName -> name
-        ip: equipo.IP,
-        os: equipo.SO,
-        user: equipo.UserID,
-        type: equipo.type,
-        // Acceso seguro a la relación 'analista' (puede venir null)
-        analyst: equipo.analista ? equipo.analista.name : "Sin Asignar",
-        status: "Operational", // <--- CAMBIO AQUÍ: Usamos 'Operational' para evitar conflicto con vulnerabilidad 'Active'
+  const { searchTerm, setSearchTerm, filters, setFilters, showFilters, setShowFilters, filteredAssets, resetFilters } =
+    useFilters(assets, currentUser);
 
-        // Transformar vulnerabilidades y datos de la tabla intermedia
-        vulnerabilities: equipo.vulnerabilidades
-          ? equipo.vulnerabilidades?.map((v) => ({
-              id: v.id,
-              cve: `Plugin ${v.pluginId}`, // Usamos pluginId como identificador visual
-              name: v.vulnName,
-              severity: v.severity,
-              // Datos de la tabla intermedia (EquipoVulnerabilidad)
-              status: v.EquipoVulnerabilidad?.estado || "Unknown",
-              date: v.EquipoVulnerabilidad?.fechaDetectada
-                ? new Date(
-                    v.EquipoVulnerabilidad.fechaDetectada
-                  ).toLocaleDateString()
-                : "N/A",
-              lastPatched: v.EquipoVulnerabilidad?.fechaParchado
-                ? // Formatear fecha parchado dd/mm/yyyy como viene de la base de datos sin ajustar a hora local
-                  new Date(
-                    v.EquipoVulnerabilidad.fechaParchado
-                  ).toLocaleDateString("es-CL", {
-                    timeZone: "UTC",
-                  })
-                : null,
-              error : v.EquipoVulnerabilidad?.error,
-              errorDescription : v.EquipoVulnerabilidad?.errorMsj || null,
-            }))
-          : [],
-
-        // Calcular riesgo en el cliente
-        riskScore: calculateRiskScore(equipo.vulnerabilidades),
-      }));
-
-      setAssets(formattedAssets);
-    } catch (err) {
-      console.error("Error fetching assets:", err);
-      setError(
-        "No se pudo conectar con el servidor. Asegúrate que el backend esté corriendo."
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    try {
-      api.getAnalistas().then((analysts) => {
-        setAnalystsList(analysts);
-      });
-    } catch (err) {
-      console.error("Error fetching analysts:", err);
-      setError(
-        "No se pudo conectar con el servidor. Asegúrate que el backend esté corriendo."
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!currentUser) return;
-    updateAssets();
-  }, [currentUser, activeTab]);
+  const stats = useStats(filteredAssets, currentUser);
 
   const isAnalyst = currentUser?.role === "Analyst";
 
-  // --- Lógica de Filtrado ---
-  const filteredAssets = useMemo(() => {
-    if (!currentUser) return [];
+  useEffect(() => {
+    let cancelled = false;
+    const controller = new AbortController();
 
-    return assets.filter((asset) => {
-      const matchesSession = isAnalyst
-        ? asset.analyst === currentUser.name
-        : true;
+    api
+      .getAnalistas(controller.signal)
+      .then((analysts) => {
+        if (!cancelled) {
+          setAnalystsList(analysts);
+          setAnalystsError(null);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled && err.name !== "CanceledError") {
+          setAnalystsError(
+            "No se pudo conectar con el servidor. Asegúrate que el backend esté corriendo."
+          );
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setAnalystsLoading(false);
+        }
+      });
 
-      const matchesSearch =
-        asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        asset.ip.includes(searchTerm) ||
-        asset.user.toLowerCase().includes(searchTerm.toLowerCase());
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, []);
 
-      const matchesAnalystFilter = isAnalyst
-        ? true
-        : filters.analyst === "Todos" || asset.analyst === filters.analyst;
-
-      const matchesVulnName =
-        filters.vulnName === "" ||
-        asset.vulnerabilities.some((v) => {
-          if (filters.todayDate === true) {
-            return (
-              v.name.toLowerCase().includes(filters.vulnName.toLowerCase()) &&
-              v.lastPatched !== new Date().toLocaleDateString()
-            );
-          } else {
-            return v.name
-              .toLowerCase()
-              .includes(filters.vulnName.toLowerCase());
-          }
-        }); // Nota: Aquí filtramos por estado 'Open' en búsqueda rápida, ajustable según necesidad
-
-      const matchesRisk = asset.riskScore >= filters.minRisk;
-
-      return (
-        matchesSession &&
-        matchesSearch &&
-        matchesAnalystFilter &&
-        matchesVulnName &&
-        matchesRisk
-      );
-    });
-  }, [assets, searchTerm, filters, currentUser, isAnalyst]);
-
-  // --- Stats ---
-  const stats = useMemo(() => {
-    if (!currentUser)
-      return { totalAssets: 0, criticalAssets: 0, appVulns: 0, avgRisk: 0 };
-
-    const targetAssets = filteredAssets;
-    const totalAssets = targetAssets.length;
-    const criticalAssets = targetAssets.filter((a) => a.riskScore > 70).length;
-
-    const appVulns = targetAssets.reduce(
-      (acc, curr) =>
-        acc +
-        curr.vulnerabilities.filter(
-          (v) =>
-            (v.name.toLowerCase().includes("chrome") ||
-              v.name.toLowerCase().includes("edge") ||
-              v.name.toLowerCase().includes("office")) &&
-            (v.status === "Open" ||
-              v.status === "New" ||
-              v.status === "Active" ||
-              v.status === "Resurfaced")
-        ).length,
-      0
-    );
-
-    const avgRisk =
-      totalAssets > 0
-        ? Math.round(
-            targetAssets.reduce((acc, curr) => acc + curr.riskScore, 0) /
-              totalAssets
-          )
-        : 0;
-
-    return { totalAssets, criticalAssets, appVulns, avgRisk };
-  }, [filteredAssets, currentUser]);
-
-  const resetFilters = () => {
-    setFilters({ analyst: "Todos", vulnName: "", minRisk: 0 });
-    setSearchTerm("");
-  };
-
-  // Manejador de carga de archivo (Simulado por ahora en frontend, idealmente POST al backend)
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
-    // Aquí iría la lógica para enviar el CSV a tu backend:
-    // const formData = new FormData(); formData.append('file', file);
-    // await fetch('/api/upload-csv', { method: 'POST', body: formData });
-
-    setTimedNotification({
+    showNotification({
       message: `Archivo seleccionado. Implementar endpoint de carga para procesar ${file.name}.`,
       type: "info",
     });
   };
 
-  // --- RENDERIZADO ---
+  const handleOperationComplete = () => {
+    refetch();
+    showNotification({
+      message: "Datos actualizados correctamente.",
+      type: "success",
+    });
+  };
 
   if (!currentUser) {
     return (
       <LoginScreen
         onLogin={setCurrentUser}
         analysts={analystsList}
-        loading={isLoading}
+        loading={analystsLoading}
       />
     );
   }
 
-  if (error && !assets.length) {
+  if ((error || analystsError) && !assets.length) {
     return (
       <div className="h-screen flex flex-col items-center justify-center bg-red-50 text-red-700 p-4 text-center">
         <AlertTriangle size={48} className="mb-4" />
         <h2 className="text-xl font-bold mb-2">Error de Conexión</h2>
-        <p>{error}</p>
+        <p>{error || analystsError}</p>
         <button
           onClick={() => window.location.reload()}
           className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
@@ -319,10 +121,9 @@ export default function App() {
       <Notification
         message={notification.message}
         type={notification.type}
-        onClose={() => setNotification({ ...notification, message: null })}
+        onClose={clearNotification}
       />
 
-      {/* Mobile Overlay */}
       {sidebarOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-40 md:hidden backdrop-blur-sm transition-opacity"
@@ -334,6 +135,7 @@ export default function App() {
         currentUser={currentUser}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
+        selectedAsset={selectedAsset}
         setSelectedAsset={setSelectedAsset}
         setCurrentUser={setCurrentUser}
         sidebarOpen={sidebarOpen}
@@ -341,7 +143,6 @@ export default function App() {
         isAnalyst={isAnalyst}
       />
 
-      {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden w-full relative">
         <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 md:px-6 shadow-sm z-10 shrink-0">
           <div className="flex items-center gap-3">
@@ -378,7 +179,6 @@ export default function App() {
           </div>
         </header>
 
-        {/* Loading Overlay Global */}
         {isLoading && (
           <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-20 flex items-center justify-center flex-col">
             <Loader2 className="animate-spin text-blue-600 mb-2" size={48} />
@@ -389,12 +189,14 @@ export default function App() {
         )}
 
         <div className="flex-1 overflow-auto p-4 md:p-6">
-          {/* VIEW: DASHBOARD */}
           {activeTab === "dashboard" && !selectedAsset && (
-            <Dashboard stats={stats} fileInputRef={fileInputRef} />
+            <Dashboard
+              stats={stats}
+              fileInputRef={fileInputRef}
+              handleFileUpload={handleFileUpload}
+            />
           )}
 
-          {/* VIEW: INVENTORY */}
           {activeTab === "inventory" && !selectedAsset && (
             <Inventory
               filteredAssets={filteredAssets}
@@ -404,30 +206,30 @@ export default function App() {
               setFilters={setFilters}
               showFilters={showFilters}
               setShowFilters={setShowFilters}
-              setTimedNotification={setTimedNotification}
+              setTimedNotification={showNotification}
               resetFilters={resetFilters}
               setSelectedAsset={setSelectedAsset}
               isAnalyst={isAnalyst}
+              analystsList={analystsList}
             />
           )}
 
-          {/* VIEW: Parchado Masivo */}
           {activeTab === "vulnerabilities" && !selectedAsset && (
             <Parchados
               currentUser={currentUser}
               activeTab={activeTab}
+              onComplete={handleOperationComplete}
             />
           )}
 
-          {/* VIEW: Reporte de Errores */}
           {activeTab === "errores" && !selectedAsset && (
             <Parchados
               currentUser={currentUser}
               activeTab={activeTab}
+              onComplete={handleOperationComplete}
             />
           )}
 
-          {/* VIEW: DETAIL */}
           {selectedAsset && (
             <Details
               selectedAsset={selectedAsset}

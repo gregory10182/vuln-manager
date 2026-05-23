@@ -1,12 +1,15 @@
 import React from "react";
-
-import { Monitor, AppWindow, AlertTriangle, Upload } from "lucide-react";
+import {
+  Monitor,
+  AppWindow,
+  AlertTriangle,
+  Upload,
+} from "lucide-react";
 
 export const Dashboard = ({ stats, fileInputRef, handleFileUpload }) => {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-        {/* Total Assets */}
         <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col">
           <span className="text-gray-500 text-sm font-medium">
             Total Asignado
@@ -19,7 +22,6 @@ export const Dashboard = ({ stats, fileInputRef, handleFileUpload }) => {
           </div>
         </div>
 
-        {/* Critical Apps */}
         <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col">
           <span
             className="text-gray-500 text-sm font-medium"
@@ -35,7 +37,6 @@ export const Dashboard = ({ stats, fileInputRef, handleFileUpload }) => {
           </div>
         </div>
 
-        {/* Critical Assets */}
         <div className="bg-white p-6 rounded-xl border border-red-100 shadow-sm flex flex-col relative overflow-hidden">
           <div className="absolute right-0 top-0 w-16 h-16 bg-red-500 opacity-5 rounded-bl-full"></div>
           <span className="text-red-600 text-sm font-medium">
@@ -49,7 +50,6 @@ export const Dashboard = ({ stats, fileInputRef, handleFileUpload }) => {
           </div>
         </div>
 
-        {/* Avg Risk */}
         <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col">
           <span className="text-gray-500 text-sm font-medium">
             Score Promedio
@@ -69,7 +69,6 @@ export const Dashboard = ({ stats, fileInputRef, handleFileUpload }) => {
         </div>
       </div>
 
-      {/* Quick Action: Upload */}
       <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <h3 className="text-blue-800 font-semibold text-lg">

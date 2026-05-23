@@ -1,27 +1,8 @@
 import React from "react";
-
 import {
-  LayoutDashboard,
-  Monitor,
   ShieldAlert,
-  Search,
-  Plus,
-  MoreVertical,
-  Laptop,
-  AlertTriangle,
-  CheckCircle,
-  XCircle,
-  User,
-  ChevronRight,
-  Activity,
-  Filter,
-  X,
-  Upload,
-  Briefcase,
   LogOut,
-  Chrome,
-  AppWindow,
-  Menu, // Importamos el icono de menú
+  X,
 } from "lucide-react";
 import { SidebarItem } from "./SidebarItem.jsx";
 
@@ -48,7 +29,6 @@ export const Sidebar = ({
           <ShieldAlert className="fill-blue-100" />
           <span>SecAssets</span>
         </div>
-        {/* Close Button for Mobile */}
         <button
           onClick={() => setSidebarOpen(false)}
           className="md:hidden text-gray-500 hover:text-gray-800"
@@ -57,7 +37,6 @@ export const Sidebar = ({
         </button>
       </div>
 
-      {/* Info User (Visible on sidebar now) */}
       <div className="px-6 pt-4 pb-0">
         <p className="text-xs text-gray-400 truncate font-medium uppercase tracking-wider">
           Sesión de {currentUser.name.split(" ")[0]}
@@ -66,7 +45,7 @@ export const Sidebar = ({
 
       <nav className="flex-1 pt-4">
         <SidebarItem
-          icon={LayoutDashboard}
+          icon={ShieldAlert}
           label="Dashboard"
           active={activeTab === "dashboard"}
           onClick={() => {
@@ -76,7 +55,7 @@ export const Sidebar = ({
           }}
         />
         <SidebarItem
-          icon={Monitor}
+          icon={LogOut}
           label="Mis Workstations"
           active={activeTab === "inventory" && !selectedAsset}
           onClick={() => {
@@ -86,7 +65,7 @@ export const Sidebar = ({
           }}
         />
         <SidebarItem
-          icon={AlertTriangle}
+          icon={ShieldAlert}
           label="Parchado Masivo"
           active={activeTab === "vulnerabilities" && !selectedAsset}
           onClick={() => {
@@ -96,7 +75,7 @@ export const Sidebar = ({
           }}
         />
         <SidebarItem
-          icon={AlertTriangle}
+          icon={ShieldAlert}
           label="Reportar Errores"
           active={activeTab === "errores" && !selectedAsset}
           onClick={() => {
@@ -111,7 +90,7 @@ export const Sidebar = ({
               Admin
             </div>
             <SidebarItem
-              icon={User}
+              icon={LogOut}
               label="Analistas"
               active={false}
               onClick={() => {}}
