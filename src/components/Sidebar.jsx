@@ -1,7 +1,11 @@
 import React from "react";
 import {
+  LayoutDashboard,
+  Monitor,
   ShieldAlert,
+  AlertTriangle,
   Clock,
+  Users,
   LogOut,
   X,
 } from "lucide-react";
@@ -46,7 +50,7 @@ export const Sidebar = ({
 
       <nav className="flex-1 pt-4">
         <SidebarItem
-          icon={ShieldAlert}
+          icon={LayoutDashboard}
           label="Dashboard"
           active={activeTab === "dashboard"}
           onClick={() => {
@@ -56,7 +60,7 @@ export const Sidebar = ({
           }}
         />
         <SidebarItem
-          icon={LogOut}
+          icon={Monitor}
           label="Mis Workstations"
           active={activeTab === "inventory" && !selectedAsset}
           onClick={() => {
@@ -76,7 +80,7 @@ export const Sidebar = ({
           }}
         />
         <SidebarItem
-          icon={ShieldAlert}
+          icon={AlertTriangle}
           label="Reportar Errores"
           active={activeTab === "errores" && !selectedAsset}
           onClick={() => {
@@ -101,10 +105,14 @@ export const Sidebar = ({
               Admin
             </div>
             <SidebarItem
-              icon={LogOut}
+              icon={Users}
               label="Analistas"
-              active={false}
-              onClick={() => {}}
+              active={activeTab === "analistas" && !selectedAsset}
+              onClick={() => {
+                onTabChange("analistas");
+                setSelectedAsset(null);
+                setSidebarOpen(false);
+              }}
             />
           </>
         )}

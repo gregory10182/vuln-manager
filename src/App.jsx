@@ -11,6 +11,7 @@ import { Inventory } from "./views/inventory.jsx";
 import { Details } from "./views/details.jsx";
 import { Parchados } from "./views/parchados.jsx";
 import { Historial } from "./views/historial.jsx";
+import { AnalistasView } from "./views/analistasView.jsx";
 import { Notification } from "./components/Notification";
 import { useNotification } from "./hooks/useNotification.js";
 import { useAssets } from "./hooks/useAssets.js";
@@ -193,8 +194,14 @@ export default function App() {
                 ? `Detalle: ${selectedAsset.name}`
                 : activeTab === "dashboard"
                 ? "Dashboard"
+                : activeTab === "vulnerabilities"
+                ? "Parchado Masivo"
+                : activeTab === "errores"
+                ? "Reportar Errores"
                 : activeTab === "historial"
                 ? "Historial"
+                : activeTab === "analistas"
+                ? "Analistas"
                 : "Inventario"}
             </h1>
           </div>
@@ -217,7 +224,7 @@ export default function App() {
         </header>
 
         {isLoading && (
-          <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-20 flex items-center justify-center flex-col">
+          <div className="absolute bottom-0 left-0 right-0 top-16 bg-white/80 backdrop-blur-sm z-20 flex items-center justify-center flex-col">
             <Loader2 className="animate-spin text-blue-600 mb-2" size={48} />
             <p className="text-gray-500 font-medium">
               Sincronizando con Base de Datos...
@@ -279,6 +286,13 @@ export default function App() {
               historial={historial}
               loading={historialLoading}
               isAnalyst={isAnalyst}
+            />
+          )}
+
+          {activeTab === "analistas" && !selectedAsset && (
+            <AnalistasView
+              analysts={analystsList}
+              loading={analystsLoading}
             />
           )}
 
