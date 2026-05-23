@@ -10,6 +10,7 @@ import { Dashboard } from "./views/dashboard.jsx";
 import { Inventory } from "./views/inventory.jsx";
 import { Details } from "./views/details.jsx";
 import { Parchados } from "./views/parchados.jsx";
+import { Historial } from "./views/historial.jsx";
 import { Notification } from "./components/Notification";
 import { useNotification } from "./hooks/useNotification.js";
 import { useAssets } from "./hooks/useAssets.js";
@@ -26,6 +27,9 @@ export default function App() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [selectedAsset, setSelectedAsset] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const [historial, setHistorial] = useState([]);
+  const [historialLoading, setHistorialLoading] = useState(false);
 
   const fileInputRef = useRef(null);
 
@@ -71,6 +75,22 @@ export default function App() {
       controller.abort();
     };
   }, []);
+
+  const fetchHistorial = () => {
+    setHistorialLoading(true);
+    api
+      .getHistorial(isAnalyst ? currentUser.id : null)
+      .then((data) => setHistorial(data))
+      .catch(() => setHistorial([]))
+      .finally(() => setHistorialLoading(false));
+  };
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    if (tab === "historial") {
+      fetchHistorial();
+    }
+  };
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
@@ -134,7 +154,7 @@ export default function App() {
       <Sidebar
         currentUser={currentUser}
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        onTabChange={handleTabChange}
         selectedAsset={selectedAsset}
         setSelectedAsset={setSelectedAsset}
         setCurrentUser={setCurrentUser}
@@ -158,6 +178,8 @@ export default function App() {
                 ? `Detalle: ${selectedAsset.name}`
                 : activeTab === "dashboard"
                 ? "Dashboard"
+                : activeTab === "historial"
+                ? "Historial"
                 : "Inventario"}
             </h1>
           </div>
@@ -227,6 +249,14 @@ export default function App() {
               currentUser={currentUser}
               activeTab={activeTab}
               onComplete={handleOperationComplete}
+            />
+          )}
+
+          {activeTab === "historial" && !selectedAsset && (
+            <Historial
+              historial={historial}
+              loading={historialLoading}
+              isAnalyst={isAnalyst}
             />
           )}
 

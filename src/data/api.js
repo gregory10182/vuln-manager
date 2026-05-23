@@ -22,15 +22,23 @@ const getVulnerabilidades = async (analistaId, signal) => {
   return response.data;
 };
 
+const getHistorial = async (analistaId, signal) => {
+  const params = analistaId ? `?analistaId=${analistaId}` : "";
+  const response = await axios.get(apiUrl + "historial" + params, { signal });
+  return response.data;
+};
+
 const parcharVulnerabilidadesMasivo = async (
   producto,
   machineNames,
-  patchDate
+  patchDate,
+  analistaId
 ) => {
   const response = await axios.patch(apiUrl + "vulns/parchar-masivo", {
     producto,
     machineNames,
     fechaParchado: patchDate || null,
+    analistaId,
   });
   return response.data;
 };
@@ -38,12 +46,14 @@ const parcharVulnerabilidadesMasivo = async (
 const reportarErroresMasivo = async (
   producto,
   machineNames,
-  errorDescription
+  errorDescription,
+  analistaId
 ) => {
   const response = await axios.patch(apiUrl + "vulns/reportar-error", {
     producto,
     machineNames,
     mensaje: errorDescription,
+    analistaId,
   });
   return response.data;
 };
@@ -53,6 +63,7 @@ export default {
   getEquiposAnalista,
   getAnalistas,
   getVulnerabilidades,
+  getHistorial,
   parcharVulnerabilidadesMasivo,
   reportarErroresMasivo,
 };

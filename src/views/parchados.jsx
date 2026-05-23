@@ -60,25 +60,24 @@ export const Parchados = ({ currentUser, activeTab, onComplete }) => {
         await api.reportarErroresMasivo(
           selectedVuln,
           machineNames.split("\n").filter(Boolean),
-          errorDescription
+          errorDescription,
+          currentUser.id
         );
         setMessage("Errores reportados exitosamente.");
-        onComplete?.();
       } else {
         await api.parcharVulnerabilidadesMasivo(
           selectedVuln,
           machineNames.split("\n").filter(Boolean),
-          patchDate || null
+          patchDate || null,
+          currentUser.id
         );
         setMessage("Vulnerabilidades parchadas exitosamente.");
-        onComplete?.();
       }
+      onComplete?.();
     } catch (error) {
       const errorMsg =
         error.response?.data?.message || error.message || "Error desconocido";
-      setMessage(
-        `Error: ${errorMsg}`
-      );
+      setMessage(`Error: ${errorMsg}`);
     } finally {
       setIsSubmitting(false);
     }

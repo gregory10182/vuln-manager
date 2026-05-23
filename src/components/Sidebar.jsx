@@ -1,6 +1,7 @@
 import React from "react";
 import {
   ShieldAlert,
+  Clock,
   LogOut,
   X,
 } from "lucide-react";
@@ -8,7 +9,7 @@ import { SidebarItem } from "./SidebarItem.jsx";
 
 export const Sidebar = ({
   activeTab,
-  setActiveTab,
+  onTabChange,
   sidebarOpen,
   setSidebarOpen,
   currentUser,
@@ -49,7 +50,7 @@ export const Sidebar = ({
           label="Dashboard"
           active={activeTab === "dashboard"}
           onClick={() => {
-            setActiveTab("dashboard");
+            onTabChange("dashboard");
             setSelectedAsset(null);
             setSidebarOpen(false);
           }}
@@ -59,7 +60,7 @@ export const Sidebar = ({
           label="Mis Workstations"
           active={activeTab === "inventory" && !selectedAsset}
           onClick={() => {
-            setActiveTab("inventory");
+            onTabChange("inventory");
             setSelectedAsset(null);
             setSidebarOpen(false);
           }}
@@ -69,7 +70,7 @@ export const Sidebar = ({
           label="Parchado Masivo"
           active={activeTab === "vulnerabilities" && !selectedAsset}
           onClick={() => {
-            setActiveTab("vulnerabilities");
+            onTabChange("vulnerabilities");
             setSelectedAsset(null);
             setSidebarOpen(false);
           }}
@@ -79,7 +80,17 @@ export const Sidebar = ({
           label="Reportar Errores"
           active={activeTab === "errores" && !selectedAsset}
           onClick={() => {
-            setActiveTab("errores");
+            onTabChange("errores");
+            setSelectedAsset(null);
+            setSidebarOpen(false);
+          }}
+        />
+        <SidebarItem
+          icon={Clock}
+          label="Historial"
+          active={activeTab === "historial" && !selectedAsset}
+          onClick={() => {
+            onTabChange("historial");
             setSelectedAsset(null);
             setSidebarOpen(false);
           }}
