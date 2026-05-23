@@ -168,6 +168,7 @@ export default function App() {
           <div className="flex items-center gap-3">
             <button
               onClick={() => setSidebarOpen(true)}
+              aria-label="Abrir menú"
               className="p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-lg md:hidden"
             >
               <Menu size={24} />

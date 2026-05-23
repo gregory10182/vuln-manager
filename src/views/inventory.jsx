@@ -31,8 +31,9 @@ export const Inventory = ({
           />
           <input
             type="text"
+            id="search-workstation"
             placeholder="Buscar usuario, IP..."
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm bg-white"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -49,6 +50,7 @@ export const Inventory = ({
                 type: "success",
               });
             }}
+            aria-label="Copiar nombres de equipos"
             className="flex-1 sm:flex-none justify-center px-3 py-2 border rounded-lg text-sm flex items-center gap-2 transition-colors bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
           >
             Copiar Equipos
@@ -63,6 +65,7 @@ export const Inventory = ({
                 type: "success",
               });
             }}
+            aria-label="Copiar direcciones IP"
             className="flex-1 sm:flex-none justify-center px-3 py-2 border rounded-lg text-sm flex items-center gap-2 transition-colors bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
           >
             Copiar IPs
@@ -98,11 +101,12 @@ export const Inventory = ({
               <div className="space-y-4">
                 {!isAnalyst && (
                   <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">
+                    <label htmlFor="filter-analyst" className="block text-xs font-medium text-gray-500 mb-1">
                       Analista
                     </label>
                     <select
-                      className="w-full p-2 border border-gray-300 rounded-md text-sm bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                      id="filter-analyst"
+                      className="w-full p-2 border border-gray-300 rounded-md text-sm bg-white outline-none"
                       value={filters.analyst}
                       onChange={(e) =>
                         setFilters({
@@ -121,12 +125,13 @@ export const Inventory = ({
                   </div>
                 )}
                 <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">
+                  <label htmlFor="filter-software" className="block text-xs font-medium text-gray-500 mb-1">
                     Software
                   </label>
                   <input
                     type="text"
-                    className="w-full p-2 border border-gray-300 rounded-md text-sm bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                    id="filter-software"
+                    className="w-full p-2 border border-gray-300 rounded-md text-sm bg-white outline-none"
                     placeholder="Ej: Chrome"
                     value={filters.vulnName}
                     onChange={(e) =>
@@ -138,12 +143,13 @@ export const Inventory = ({
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1 flex justify-between">
+                  <label htmlFor="filter-risk" className="block text-xs font-medium text-gray-500 mb-1 flex justify-between">
                     <span>Riesgo Mínimo</span>
                     <span className="text-blue-600">{filters.minRisk}%</span>
                   </label>
                   <input
                     type="range"
+                    id="filter-risk"
                     min="0"
                     max="100"
                     step="10"

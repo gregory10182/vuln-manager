@@ -104,10 +104,11 @@ export const Parchados = ({ currentUser, activeTab, onComplete }) => {
       )}
 
       <div className="mb-4">
-        <label className="block mb-2 font-medium">
+        <label htmlFor="select-vuln" className="block mb-2 font-medium">
           Selecciona Vulnerabilidad
         </label>
         <select
+          id="select-vuln"
           className="w-full p-2 border border-gray-300 rounded disabled:opacity-50"
           value={selectedVuln}
           onChange={(e) => setSelectedVuln(e.target.value)}
@@ -125,10 +126,11 @@ export const Parchados = ({ currentUser, activeTab, onComplete }) => {
       </div>
 
       <div className="mb-4">
-        <label className="block mb-2 font-medium">
+        <label htmlFor="textarea-machines" className="block mb-2 font-medium">
           Nombres de Máquinas (una por línea)
         </label>
         <textarea
+          id="textarea-machines"
           className="w-full p-2 border border-gray-300 rounded h-32 disabled:opacity-50"
           value={machineNames}
           onChange={(e) => setMachineNames(e.target.value)}
@@ -138,9 +140,10 @@ export const Parchados = ({ currentUser, activeTab, onComplete }) => {
 
       {activeTab !== "errores" && (
         <div className="mb-4">
-          <label className="block mb-2 font-medium">Fecha de Parchado</label>
+          <label htmlFor="input-patch-date" className="block mb-2 font-medium">Fecha de Parchado</label>
           <input
             type="date"
+            id="input-patch-date"
             className="w-full p-2 border border-gray-300 rounded disabled:opacity-50"
             value={patchDate}
             onChange={(e) => setPatchDate(e.target.value)}
@@ -151,10 +154,11 @@ export const Parchados = ({ currentUser, activeTab, onComplete }) => {
 
       {activeTab === "errores" && (
         <div className="mb-4">
-          <label className="block mb-2 font-medium">
+          <label htmlFor="textarea-error" className="block mb-2 font-medium">
             Descripción del Error
           </label>
           <textarea
+            id="textarea-error"
             className="w-full p-2 border border-gray-300 rounded h-24 disabled:opacity-50"
             placeholder="Describe el error que deseas reportar..."
             value={errorDescription}
